@@ -1,0 +1,11 @@
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+await mkdir('dist/assets', { recursive: true });
+let html = await readFile('index.html', 'utf8');
+html = html.replace('/src/main.tsx', '/assets/main.js').replace('</head>', '<link rel="manifest" href="/manifest.webmanifest"></head>');
+await writeFile('dist/index.html', html);
+await writeFile('dist/assets/main.js', "import React from '/node_modules/react/index.js';import{createRoot}from'/node_modules/react-dom/client.js';import App from '/src/App.tsx';import '/src/index.css';createRoot(document.getElementById('root')).render(React.createElement(App));");
+await writeFile('dist/manifest.webmanifest', JSON.stringify({ name: 'Hard Motion Inventory', short_name: 'Hard Motion', display: 'standalone', start_url: '/', theme_color: '#059669', background_color: '#0f172a', icons: [{ src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' }] }, null, 2));
+await writeFile('dist/sw.js', "self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',()=>self.clients.claim());");
+if (existsSync('public')) await cp('public', 'dist', { recursive: true });
+console.log('Hard Motion build generated in dist/');
