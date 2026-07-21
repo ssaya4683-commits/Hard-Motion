@@ -7,11 +7,12 @@ export type Product = {
   brand: string;
   size: string;
   color: string;
-  costPrice: number;
-  salePrice: number;
+  purchasePrice: number;
+  sellingPrice: number;
   stock: number;
-  minStock: number;
-  photo?: string;
+  minimumStock: number;
+  image?: string;
+  description: string;
   createdAt: string;
   updatedAt: string;
 };

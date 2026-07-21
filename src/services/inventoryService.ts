@@ -2,25 +2,47 @@ import { db } from "../db/db";
 import type { Product, TransactionType } from "../types";
 
 const now = () => new Date().toISOString();
+export type ProductInput = Omit<Product, "createdAt" | "updatedAt"> & { id?: number };
+
+export const getStockStatus = (product: Pick<Product, "stock" | "minimumStock">) => {
+  if (product.stock <= 0) return "out";
+  if (product.stock <= product.minimumStock) return "low";
+  return "safe";
+};
 
 export const inventoryService = {
-  async seed() {
-    if ((await db.products.count()) > 0) return;
-    const products: Product[] = [
-      { sku: "HM-TS-001", barcode: "899100000001", name: "Hard Motion Oversized Tee", category: "T-Shirt", brand: "Hard Motion", size: "L", color: "Black", costPrice: 85000, salePrice: 149000, stock: 32, minStock: 8, createdAt: now(), updatedAt: now() },
-      { sku: "HM-HD-002", barcode: "899100000002", name: "Hard Motion Hoodie", category: "Hoodie", brand: "Hard Motion", size: "XL", color: "Charcoal", costPrice: 180000, salePrice: 329000, stock: 7, minStock: 10, createdAt: now(), updatedAt: now() },
-      { sku: "HM-CP-003", barcode: "899100000003", name: "Motion Cap", category: "Accessories", brand: "Hard Motion", size: "All Size", color: "Olive", costPrice: 45000, salePrice: 99000, stock: 18, minStock: 5, createdAt: now(), updatedAt: now() },
-    ];
-    await db.products.bulkAdd(products);
-    await db.transactions.bulkAdd(products.map((product, index) => ({ productId: index + 1, productName: product.name, type: "in", quantity: product.stock, note: "Stok awal", createdAt: now() })));
+  async getProducts() {
+    const products = await db.products.orderBy("updatedAt").reverse().toArray();
+    return products.map((product) => ({
+      ...product,
+      purchasePrice: product.purchasePrice ?? (product as Product & { costPrice?: number }).costPrice ?? 0,
+      sellingPrice: product.sellingPrice ?? (product as Product & { salePrice?: number }).salePrice ?? 0,
+      minimumStock: product.minimumStock ?? (product as Product & { minStock?: number }).minStock ?? 0,
+      image: product.image ?? (product as Product & { photo?: string }).photo ?? "",
+      description: product.description ?? "",
+    }));
   },
-  getProducts: () => db.products.orderBy("updatedAt").reverse().toArray(),
   getTransactions: () => db.transactions.orderBy("createdAt").reverse().toArray(),
-  async saveProduct(product: Omit<Product, "createdAt" | "updatedAt"> & { id?: number }) {
-    if (product.id) return db.products.update(product.id, { ...product, updatedAt: now() });
-    return db.products.add({ ...product, createdAt: now(), updatedAt: now() });
+  async isSkuDuplicate(sku: string, currentId?: number) {
+    const products = await db.products.toArray();
+    const existing = products.find((product) => product.sku.toLowerCase() === sku.trim().toLowerCase());
+    return Boolean(existing && existing.id !== currentId);
+  },
+  async saveProduct(product: ProductInput) {
+    const sku = product.sku.trim();
+    if (await this.isSkuDuplicate(sku, product.id)) throw new Error("SKU already exists");
+    const payload = { ...product, sku, updatedAt: now() };
+    if (product.id) return db.products.update(product.id, payload);
+    return db.products.add({ ...payload, createdAt: now() });
   },
   deleteProduct: (id: number) => db.products.delete(id),
+  async duplicateProduct(product: Product) {
+    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...copy } = product;
+    let sku = `${product.sku}-COPY`;
+    let index = 2;
+    while (await this.isSkuDuplicate(sku)) sku = `${product.sku}-COPY-${index++}`;
+    return this.saveProduct({ ...copy, sku, barcode: product.barcode ? `${product.barcode}-COPY` : "", name: `${product.name} (Copy)` });
+  },
   async moveStock(product: Product, type: TransactionType, quantity: number, note: string) {
     if (!product.id) return;
     const nextStock = type === "in" ? product.stock + quantity : Math.max(0, product.stock - quantity);

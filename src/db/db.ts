@@ -7,8 +7,8 @@ class HardMotionDatabase extends Dexie {
 
   constructor() {
     super("hard-motion-db");
-    this.version(1).stores({
-      products: "++id, sku, barcode, name, category, brand, stock, minStock, updatedAt",
+    this.version(2).stores({
+      products: "++id, sku, barcode, name, category, brand, stock, minimumStock, sellingPrice, purchasePrice, createdAt, updatedAt",
       transactions: "++id, productId, type, createdAt",
     });
   }
