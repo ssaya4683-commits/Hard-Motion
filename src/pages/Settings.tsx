@@ -1,0 +1,3 @@
+import { Card } from "../components/Card";
+import { AppLayout } from "../layouts/AppLayout";
+export function Settings() { return <AppLayout><Card><h1 className="mb-3 text-3xl font-black">Pengaturan</h1><p className="text-slate-500">Atur preferensi aplikasi, gunakan tombol dark mode di header, dan install aplikasi dari prompt PWA browser.</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><input className="rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950" defaultValue="Hard Motion Store"/><input className="rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950" defaultValue="IDR"/></div></Card></AppLayout>; }

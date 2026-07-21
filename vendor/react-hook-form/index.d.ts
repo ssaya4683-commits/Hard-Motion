@@ -1,0 +1,1 @@
+export type FieldValues = Record<string, unknown>; export declare function useForm<T extends FieldValues>(opts?: unknown): { register(name: keyof T): { name: string }; handleSubmit(fn: (data: T) => void | Promise<void>): (e: unknown) => void; reset(v?: Partial<T>): void; formState: { errors: Partial<Record<keyof T, {message?: string}>>; isSubmitting: boolean } };

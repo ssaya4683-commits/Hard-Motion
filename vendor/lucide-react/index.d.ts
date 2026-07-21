@@ -1,0 +1,1 @@
+import type { ComponentType } from 'react'; export type Icon=ComponentType<{size?:number|string; className?:string}>; export const Activity:Icon, AlertTriangle:Icon, Boxes:Icon, Package:Icon, Pencil:Icon, Plus:Icon, Trash2:Icon, BarChart3:Icon, Home:Icon, Menu:Icon, Moon:Icon, Settings:Icon, ShoppingCart:Icon, Sun:Icon, Truck:Icon;

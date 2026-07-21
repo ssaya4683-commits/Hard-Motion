@@ -1,0 +1,1 @@
+{"name":"recharts","version":"3.9.2","type":"module","main":"index.js","types":"index.d.ts","peerDependencies":{"react":"*","react-dom":"*"}}
