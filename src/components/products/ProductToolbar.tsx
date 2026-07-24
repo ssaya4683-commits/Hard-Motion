@@ -1,4 +1,10 @@
-import { Grid2x2, List, Plus, Search } from "lucide-react";
+import {
+  Grid2x2,
+  List,
+  Plus,
+  Search,
+  Download,
+} from "lucide-react";
 
 export type SortKey =
   | "createdAt"
@@ -34,6 +40,7 @@ interface ProductToolbarProps {
   onViewModeChange: (mode: "table" | "grid") => void;
 
   onAdd: () => void;
+  onExport: () => void;
 }
 
 export function ProductToolbar({
@@ -54,6 +61,7 @@ export function ProductToolbar({
   onPageSizeChange,
   onViewModeChange,
   onAdd,
+  onExport,
 }: ProductToolbarProps) {
   const selectClass =
     "rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950";
@@ -157,42 +165,56 @@ export function ProductToolbar({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        {/* View Mode */}
-        <div className="flex overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700">
-          <button
-            onClick={() => onViewModeChange("table")}
-            className={`flex items-center gap-2 px-4 py-2 text-sm ${
-              viewMode === "table"
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                : ""
-            }`}
-          >
-            <List size={18} />
-            Table
-          </button>
 
-          <button
-            onClick={() => onViewModeChange("grid")}
-            className={`flex items-center gap-2 px-4 py-2 text-sm ${
-              viewMode === "grid"
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                : ""
-            }`}
-          >
-            <Grid2x2 size={18} />
-            Grid
-          </button>
-        </div>
+  {/* View Mode */}
+<div className="flex overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700">
+  <button
+    onClick={() => onViewModeChange("table")}
+    className={`flex items-center gap-2 px-4 py-2 text-sm ${
+      viewMode === "table"
+        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+        : ""
+    }`}
+  >
+    <List size={18} />
+    Table
+  </button>
 
-        {/* Add Button */}
-        <button
-          onClick={onAdd}
-          className="flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2 text-white transition hover:opacity-90 dark:bg-white dark:text-slate-900"
-        >
-          <Plus size={18} />
-          Add Product
-        </button>
-      </div>
+  <button
+    onClick={() => onViewModeChange("grid")}
+    className={`flex items-center gap-2 px-4 py-2 text-sm ${
+      viewMode === "grid"
+        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+        : ""
+    }`}
+  >
+    <Grid2x2 size={18} />
+    Grid
+  </button>
+</div>
+
+  {/* Action Buttons */}
+  <div className="flex items-center gap-2">
+
+    <button
+      onClick={onExport}
+      className="flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-2 transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+    >
+      <Download size={18} />
+      Export Excel
+    </button>
+
+    <button
+      onClick={onAdd}
+      className="flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2 text-white transition hover:opacity-90 dark:bg-white dark:text-slate-900"
+    >
+      <Plus size={18} />
+      Add Product
+    </button>
+
+  </div>
+
+</div>
     </div>
   );
 }

@@ -1,10 +1,16 @@
 import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  base: "/Hard-Motion/",
+  base:
+    process.env.NODE_ENV === "production"
+      ? "/Hard-Motion/"
+      : "/",
 
   plugins: [
+    tailwindcss(),
+
     VitePWA({
       registerType: "autoUpdate",
 
@@ -24,10 +30,10 @@ export default defineConfig({
           {
             src: "/Hard-Motion/favicon.svg",
             sizes: "any",
-            type: "image/svg+xml"
-          }
-        ]
-      }
-    })
-  ]
+            type: "image/svg+xml",
+          },
+        ],
+      },
+    }),
+  ],
 });

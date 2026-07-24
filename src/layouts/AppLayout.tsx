@@ -12,6 +12,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 
+
 const nav = [
   ["/", "Dashboard", Home],
   ["/products", "Produk", Package],
@@ -35,13 +36,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
           key={to}
           to={to}
           onClick={() => setOpen(false)}
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-xl px-4 py-3 transition ${
-              isActive
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-            }`
-          }
+          className={({ isActive }: { isActive: boolean }) =>
+  `flex items-center gap-3 rounded-xl px-4 py-3 transition ${
+    isActive
+      ? "bg-black text-white dark:bg-white dark:text-black"
+      : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+  }`
+}
         >
           <Icon size={18} />
           {label}

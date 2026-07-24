@@ -60,6 +60,19 @@ class HardMotionDB extends Dexie {
   productSizes:
     "++id,productId,size,stock",
 });
+this.version(4).stores({
+  products:
+    "++id,sku,barcode,name,category,brand,stock,minimumStock,createdAt,updatedAt",
+
+  transactions:
+    "++id,productId,type,size,createdAt",
+
+  productImages:
+    "++id,productId,isCover,createdAt",
+
+  productSizes:
+    "++id,productId,size,stock",
+});
   }
 }
 

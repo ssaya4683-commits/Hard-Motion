@@ -12,6 +12,7 @@ import { ProductDetailModal } from "../components/products/ProductDetailModal";
 
 import { useInventory } from "../hooks/useInventory";
 import { getStockStatus } from "../services/inventoryService";
+import { exportProductsToExcel } from "../services/excelService";
 
 import type { Product } from "../types";
 
@@ -210,6 +211,7 @@ export function Products() {
       }}
       onViewModeChange={setViewMode}
       onAdd={openAdd}
+      onExport={() => exportProductsToExcel(filtered)}
     />
 
     <Card className="overflow-hidden">

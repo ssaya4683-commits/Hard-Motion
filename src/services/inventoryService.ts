@@ -50,9 +50,9 @@ export const inventoryService = {
   async getProducts() {
     const products =
       await db.products
-        .orderBy("updatedAt")
-        .reverse()
-        .toArray();
+  .orderBy("updatedAt")
+  .reverse()
+  .toArray();
 
     return products.map(
       (product) => ({

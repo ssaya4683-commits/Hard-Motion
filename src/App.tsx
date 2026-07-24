@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import { AppLayout } from "./layouts/AppLayout";
 
 import { Dashboard } from "./pages/Dashboard";
 import { Products } from "./pages/Products";
@@ -9,25 +11,18 @@ import { Settings } from "./pages/Settings";
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/products" element={<Products />} />
-
-        <Route
-          path="/stock-in"
-          element={<StockMove type="IN" />}
-        />
-
-        <Route
-          path="/stock-out"
-          element={<StockMove type="OUT" />}
-        />
-
-        <Route path="/history" element={<History />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
-    </Router>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/stock-in" element={<StockMove type="IN" />} />
+          <Route path="/stock-out" element={<StockMove type="OUT" />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </AppLayout>
+    </BrowserRouter>
   );
 }
