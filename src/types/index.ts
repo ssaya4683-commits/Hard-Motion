@@ -1,30 +1,79 @@
-export type Product = {
+export interface Product {
   id?: number;
+
   sku: string;
   barcode: string;
+
   name: string;
   category: string;
   brand: string;
-  size: string;
-  color: string;
+
   purchasePrice: number;
   sellingPrice: number;
+
+  /**
+   * Legacy field
+   * Akan dihapus setelah migrasi selesai
+   */
   stock: number;
   minimumStock: number;
-  image?: string;
+  size: string;
+
+  color: string;
+  image: string;
   description: string;
+
   createdAt: string;
-  updatedAt: string;
-};
+  updatedAt?: string;
+}
 
-export type TransactionType = "in" | "out";
-
-export type StockTransaction = {
+export interface ProductImage {
   id?: number;
+
   productId: number;
-  productName: string;
-  type: TransactionType;
-  quantity: number;
-  note: string;
+
+  image: string;
+
+  isCover: boolean;
+
   createdAt: string;
-};
+}
+
+export interface ProductSize {
+  id?: number;
+
+  productId: number;
+
+  size: number;
+
+  stock: number;
+
+  createdAt: string;
+}
+
+export type TransactionType =
+  | "IN"
+  | "OUT"
+  | "ADJUSTMENT";
+
+export interface Transaction {
+  id?: number;
+
+  productId: number;
+
+  /**
+   * Legacy
+   * Dipakai History dan Dashboard lama
+   */
+  productName?: string;
+
+  size?: number;
+
+  type: TransactionType;
+
+  quantity: number;
+
+  note?: string;
+
+  createdAt: string;
+}

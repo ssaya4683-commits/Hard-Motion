@@ -1,42 +1,300 @@
-import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
+
 import { AppLayout } from "../layouts/AppLayout";
-import { getStockStatus } from "../services/inventoryService";
-import { useInventory } from "../hooks/useInventory";
-import type { Product } from "../types";
-import { formatCurrency, formatDate } from "../utils/format";
+import { Card } from "../components/common/Card";
+
 import { ProductForm } from "./ProductForm";
 
-type SortKey = "name" | "stock" | "sellingPrice" | "purchasePrice" | "createdAt";
-type StockFilter = "all" | "safe" | "low" | "out";
-const statusMeta = { safe: ["Safe", "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"], low: ["Low Stock", "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300"], out: ["Out of Stock", "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"] } as const;
+import { ProductToolbar } from "../components/products/ProductToolbar";
+import { ProductTable } from "../components/products/ProductTable";
+import { ProductGrid } from "../components/products/ProductGrid";
+import { ProductDetailModal } from "../components/products/ProductDetailModal";
+
+import { useInventory } from "../hooks/useInventory";
+import { getStockStatus } from "../services/inventoryService";
+
+import type { Product } from "../types";
+
+type SortKey =
+  | "name"
+  | "stock"
+  | "sellingPrice"
+  | "purchasePrice"
+  | "createdAt";
+
+type StockFilter =
+  | "all"
+  | "safe"
+  | "low"
+  | "out";
 
 export function Products() {
-  const { products, saveProduct, deleteProduct, duplicateProduct, isSkuDuplicate } = useInventory();
-  const [editing, setEditing] = useState<Product | undefined>();
-  const [viewing, setViewing] = useState<Product | undefined>();
-  const [showForm, setShowForm] = useState(false);
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
-  const [brand, setBrand] = useState("all");
-  const [stockStatus, setStockStatus] = useState<StockFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
-  const [pageSize, setPageSize] = useState(10);
-  const [page, setPage] = useState(1);
-  const categories = useMemo(() => [...new Set(products.map((p) => p.category).filter(Boolean))], [products]);
-  const brands = useMemo(() => [...new Set(products.map((p) => p.brand).filter(Boolean))], [products]);
+  const {
+    products,
+    saveProduct,
+    deleteProduct,
+    duplicateProduct,
+    isSkuDuplicate,
+  } = useInventory();
+
+  const [editing, setEditing] =
+    useState<Product>();
+
+  const [viewing, setViewing] =
+    useState<Product>();
+
+  const [showForm, setShowForm] =
+    useState(false);
+
+  const [query, setQuery] =
+    useState("");
+
+  const [category, setCategory] =
+    useState("all");
+
+  const [brand, setBrand] =
+    useState("all");
+
+  const [stockStatus, setStockStatus] =
+    useState<StockFilter>("all");
+
+  const [sortKey, setSortKey] =
+    useState<SortKey>("createdAt");
+
+  const [pageSize, setPageSize] =
+    useState(10);
+
+  const [page, setPage] =
+    useState(1);
+
+  const [viewMode, setViewMode] =
+    useState<"table" | "grid">("table");
+
+  const categories = useMemo(
+    () =>
+      [...new Set(products.map((p) => p.category).filter(Boolean))],
+    [products]
+  );
+
+  const brands = useMemo(
+    () =>
+      [...new Set(products.map((p) => p.brand).filter(Boolean))],
+    [products]
+  );
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    return products.filter((p) => (!q || [p.name, p.sku, p.barcode, p.category, p.brand].some((v) => v.toLowerCase().includes(q))) && (category === "all" || p.category === category) && (brand === "all" || p.brand === brand) && (stockStatus === "all" || getStockStatus(p) === stockStatus)).sort((a, b) => sortKey === "name" ? a.name.localeCompare(b.name) : sortKey === "createdAt" ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() : Number(b[sortKey]) - Number(a[sortKey]));
-  }, [products, query, category, brand, stockStatus, sortKey]);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pageProducts = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const selectClass = "rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950";
-  const openAdd = () => { setEditing(undefined); setShowForm(true); };
-  const openEdit = (product: Product) => { setEditing(product); setShowForm(true); };
-  const remove = async (product: Product) => { if (product.id && confirm(`Delete ${product.name}?`)) await deleteProduct(product.id); };
-  return <AppLayout><div className="space-y-6"><div className="flex flex-col justify-between gap-3 sm:flex-row"><div><h1 className="text-3xl font-black">Products</h1><p className="text-slate-500">Professional product management with real Dexie CRUD, search, filters, sorting, images, and stock controls.</p></div><Button onClick={openAdd}><Plus size={18}/> Add Product</Button></div><Card><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5"><label className="relative xl:col-span-2"><span className="absolute left-3 top-2.5 text-slate-400">⌕</span><input value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} placeholder="Search name, SKU, barcode, category, brand" className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm dark:border-slate-700 dark:bg-slate-950"/></label><select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className={selectClass}><option value="all">All categories</option>{categories.map((v) => <option key={v}>{v}</option>)}</select><select value={brand} onChange={(e) => { setBrand(e.target.value); setPage(1); }} className={selectClass}><option value="all">All brands</option>{brands.map((v) => <option key={v}>{v}</option>)}</select><select value={stockStatus} onChange={(e) => { setStockStatus(e.target.value as StockFilter); setPage(1); }} className={selectClass}><option value="all">All stock status</option><option value="safe">Safe</option><option value="low">Low Stock</option><option value="out">Out of Stock</option></select><select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} className={selectClass}><option value="createdAt">Created Date</option><option value="name">Product Name</option><option value="stock">Stock</option><option value="sellingPrice">Selling Price</option><option value="purchasePrice">Purchase Price</option></select><select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className={selectClass}>{[10,25,50,100].map((v) => <option key={v} value={v}>{v} / page</option>)}</select></div></Card><Card className="overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[1320px] text-sm"><thead><tr className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/60"><th className="p-3">Product Image</th><th>SKU</th><th>Barcode</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Size</th><th>Color</th><th>Purchase Price</th><th>Selling Price</th><th>Stock</th><th>Minimum Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>{pageProducts.map((p) => { const status = getStockStatus(p); return <tr key={p.id} className="border-t border-slate-200 align-middle dark:border-slate-800"><td className="p-3">{p.image ? <img src={p.image} className="h-14 w-14 rounded-2xl object-cover" alt={p.name}/> : <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-xs text-slate-400 dark:bg-slate-800">No img</div>}</td><td className="font-bold">{p.sku}</td><td>{p.barcode || "-"}</td><td><button onClick={() => setViewing(p)} className="font-semibold text-emerald-700 hover:underline dark:text-emerald-300">{p.name}</button><p className="max-w-56 truncate text-xs text-slate-500">{p.description}</p></td><td>{p.category || "-"}</td><td>{p.brand || "-"}</td><td>{p.size || "-"}</td><td>{p.color || "-"}</td><td>{formatCurrency(p.purchasePrice)}</td><td className="font-semibold">{formatCurrency(p.sellingPrice)}</td><td>{p.stock}</td><td>{p.minimumStock}</td><td><span className={`rounded-full px-3 py-1 text-xs font-bold ${statusMeta[status][1]}`}>{statusMeta[status][0]}</span></td><td><div className="flex gap-2"><button title="View" onClick={() => setViewing(p)} className="text-slate-500">👁</button><button title="Edit" onClick={() => openEdit(p)} className="text-emerald-600"><Pencil size={18}/></button><button title="Duplicate" onClick={() => duplicateProduct(p)} className="text-blue-600">⧉</button><button title="Delete" onClick={() => remove(p)} className="text-red-600"><Trash2 size={18}/></button></div></td></tr>; })}{pageProducts.length === 0 && <tr><td colSpan={14} className="p-8 text-center text-slate-500">No products found.</td></tr>}</tbody></table></div><div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm dark:border-slate-800 sm:flex-row"><span>Showing {pageProducts.length} of {filtered.length} products</span><div className="flex gap-2"><button disabled={currentPage === 1} onClick={() => setPage((p) => p - 1)} className="rounded-lg border px-3 py-1 disabled:opacity-40 dark:border-slate-700">Prev</button><span className="px-2 py-1">Page {currentPage} / {totalPages}</span><button disabled={currentPage === totalPages} onClick={() => setPage((p) => p + 1)} className="rounded-lg border px-3 py-1 disabled:opacity-40 dark:border-slate-700">Next</button></div></div></Card>{showForm && <ProductForm product={editing} isSkuDuplicate={isSkuDuplicate} onClose={() => setShowForm(false)} onSave={async (p) => { await saveProduct(p); setShowForm(false); }}/>} {viewing && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"><Card className="w-full max-w-xl"><div className="flex justify-between gap-3"><h2 className="text-2xl font-black">{viewing.name}</h2><button onClick={() => setViewing(undefined)}>✕</button></div>{viewing.image && <img src={viewing.image} className="my-4 h-56 w-full rounded-2xl object-cover" alt={viewing.name}/>}<div className="grid gap-2 text-sm sm:grid-cols-2"><p><b>SKU:</b> {viewing.sku}</p><p><b>Barcode:</b> {viewing.barcode || "-"}</p><p><b>Category:</b> {viewing.category || "-"}</p><p><b>Brand:</b> {viewing.brand || "-"}</p><p><b>Size:</b> {viewing.size || "-"}</p><p><b>Color:</b> {viewing.color || "-"}</p><p><b>Purchase:</b> {formatCurrency(viewing.purchasePrice)}</p><p><b>Selling:</b> {formatCurrency(viewing.sellingPrice)}</p><p><b>Stock:</b> {viewing.stock}</p><p><b>Minimum:</b> {viewing.minimumStock}</p><p className="sm:col-span-2"><b>Created:</b> {formatDate(viewing.createdAt)}</p><p className="sm:col-span-2"><b>Description:</b> {viewing.description || "-"}</p></div></Card></div>}</div></AppLayout>;
+
+    return products
+      .filter(
+        (product) =>
+          (!q ||
+            [
+              product.name,
+              product.sku,
+              product.barcode,
+              product.category,
+              product.brand,
+            ].some((v) => v?.toLowerCase().includes(q))) &&
+          (category === "all" || product.category === category) &&
+          (brand === "all" || product.brand === brand) &&
+          (stockStatus === "all" ||
+            getStockStatus(product) === stockStatus)
+      )
+      .sort((a, b) => {
+        if (sortKey === "name") {
+          return a.name.localeCompare(b.name);
+        }
+
+        if (sortKey === "createdAt") {
+          return (
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+          );
+        }
+
+        return Number(b[sortKey]) - Number(a[sortKey]);
+      });
+  }, [
+    products,
+    query,
+    category,
+    brand,
+    stockStatus,
+    sortKey,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / pageSize)
+  );
+
+  const currentPage = Math.min(
+    page,
+    totalPages
+  );
+
+  const pageProducts = filtered.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  function openAdd() {
+    setEditing(undefined);
+    setShowForm(true);
+  }
+
+  function openEdit(product: Product) {
+    setEditing(product);
+    setShowForm(true);
+  }
+
+  async function remove(product: Product) {
+    if (
+      !product.id ||
+      !confirm(`Delete ${product.name}?`)
+    )
+      return;
+
+    await deleteProduct(product.id);
+  }
+
+  return (
+    <AppLayout>
+  <div className="space-y-6">
+
+    <div className="flex flex-col justify-between gap-3 sm:flex-row">
+
+      <div>
+        <h1 className="text-3xl font-black">
+          Products
+        </h1>
+
+        <p className="text-slate-500">
+          Hard Motion Inventory
+        </p>
+      </div>
+
+    </div>
+
+    <ProductToolbar
+      query={query}
+      category={category}
+      brand={brand}
+      stockStatus={stockStatus}
+      sortKey={sortKey}
+      pageSize={pageSize}
+      viewMode={viewMode}
+      categories={categories}
+      brands={brands}
+      onQueryChange={(value) => {
+        setQuery(value);
+        setPage(1);
+      }}
+      onCategoryChange={(value) => {
+        setCategory(value);
+        setPage(1);
+      }}
+      onBrandChange={(value) => {
+        setBrand(value);
+        setPage(1);
+      }}
+      onStockStatusChange={(value) => {
+        setStockStatus(value);
+        setPage(1);
+      }}
+      onSortChange={setSortKey}
+      onPageSizeChange={(value) => {
+        setPageSize(value);
+        setPage(1);
+      }}
+      onViewModeChange={setViewMode}
+      onAdd={openAdd}
+    />
+
+    <Card className="overflow-hidden">
+
+      {viewMode === "table" ? (
+
+        <ProductTable
+          products={pageProducts}
+          onView={setViewing}
+          onEdit={openEdit}
+          onDuplicate={duplicateProduct}
+          onDelete={remove}
+        />
+
+      ) : (
+
+        <ProductGrid
+          products={pageProducts}
+          onView={setViewing}
+          onEdit={openEdit}
+          onDuplicate={duplicateProduct}
+          onDelete={remove}
+        />
+
+      )}
+
+      <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 p-4 text-sm dark:border-slate-800 sm:flex-row">
+
+        <span>
+          Showing {pageProducts.length} of {filtered.length} products
+        </span>
+
+        <div className="flex items-center gap-2">
+
+          <button
+            disabled={currentPage === 1}
+            onClick={() =>
+              setPage((page) => page - 1)
+            }
+            className="rounded-lg border px-3 py-1 disabled:opacity-40 dark:border-slate-700"
+          >
+            Prev
+          </button>
+
+          <span>
+            Page {currentPage} / {totalPages}
+          </span>
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() =>
+              setPage((page) => page + 1)
+            }
+            className="rounded-lg border px-3 py-1 disabled:opacity-40 dark:border-slate-700"
+          >
+            Next
+          </button>
+
+        </div>
+
+      </div>
+
+    </Card>
+          {showForm && (
+        <ProductForm
+          product={editing}
+          isSkuDuplicate={isSkuDuplicate}
+          onClose={() => {
+            setShowForm(false);
+            setEditing(undefined);
+          }}
+          onSave={async (product) => {
+            await saveProduct(product);
+            setShowForm(false);
+            setEditing(undefined);
+          }}
+        />
+      )}
+
+      <ProductDetailModal
+        product={viewing}
+        onClose={() => setViewing(undefined)}
+      />
+
+    </div>
+  </AppLayout>
+  );
 }

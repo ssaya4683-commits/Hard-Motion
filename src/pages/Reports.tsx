@@ -1,5 +1,5 @@
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
+import { Button } from "../components/common/Button";
+import { Card } from "../components/common/Card";
 import { AppLayout } from "../layouts/AppLayout";
 import { useInventory } from "../hooks/useInventory";
 
