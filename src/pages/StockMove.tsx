@@ -1,15 +1,16 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import { Card } from "../components/common/Card";
 import { Button } from "../components/common/Button";
+import { notificationService } from "../services/notificationService";
 
 import { useInventory } from "../hooks/useInventory";
 
-import { AppLayout } from "../layouts/AppLayout";
 
 import type {
   ProductSize,
@@ -30,6 +31,14 @@ export function StockMove({
     productId,
     setProductId,
   ] = useState("");
+
+  const [
+  barcode,
+  setBarcode,
+] = useState("");
+
+const barcodeRef =
+  useRef<HTMLInputElement>(null);
 
   const [
     size,
@@ -68,6 +77,22 @@ export function StockMove({
         ),
       [products, productId]
     );
+    useEffect(() => {
+  const code = barcode.trim();
+
+  if (!code) {
+    return;
+  }
+
+  const found = products.find(
+  (product) =>
+    String(product.barcode ?? "").trim() === code
+);
+
+  if (found?.id) {
+    setProductId(String(found.id));
+  }
+}, [barcode, products]);
       useEffect(() => {
     async function loadSizes() {
       if (!productId) {
@@ -104,7 +129,8 @@ export function StockMove({
   );
 
   return (
-    <AppLayout>
+    <>
+    <div className="space-y-6">
       <Card className="max-w-2xl">
         <h1 className="mb-6 text-3xl font-black">
           {title}
@@ -114,6 +140,12 @@ export function StockMove({
           className="space-y-5"
           onSubmit={async (e) => {
             e.preventDefault();
+            console.log({
+  selectedProduct,
+  size,
+  quantity,
+  type,
+});
 
             if (
               !selectedProduct ||
@@ -121,20 +153,49 @@ export function StockMove({
             )
               return;
 
-            await moveStock({
-              product: selectedProduct,
-              size: Number(size),
-              type,
-              quantity,
-              note:
-                note.trim() ||
-                title,
-            });
+            try {
+  await moveStock({
+    product: selectedProduct,
+    size: Number(size),
+    type,
+    quantity,
+    note: note.trim() || title,
+  });
+} catch (error) {
+  console.error("MOVE STOCK ERROR", error);
+  notificationService.error(
+  "Stok Tidak Mencukupi",
+  error instanceof Error
+    ? error.message
+    : "Terjadi kesalahan."
+);
+  return;
+}
 
             setQuantity(1);
             setNote("");
+            setBarcode("");
+            setProductId("");
+            setSize("");
+            barcodeRef.current?.focus();
           }}
         >
+          <div>
+  <label className="mb-2 block text-sm font-semibold">
+    Scan / Barcode
+  </label>
+
+  <input
+  ref={barcodeRef}
+  type="text"
+  value={barcode}
+  onChange={(e) =>
+    setBarcode(e.target.value)
+  }
+  placeholder="Scan atau ketik barcode..."
+  className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950"
+/>
+</div>
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Produk
@@ -262,13 +323,10 @@ export function StockMove({
             <Button
               type="submit"
               disabled={
-                !productId ||
-                !size ||
-                quantity < 1 ||
-                (type === "OUT" &&
-                  !!selectedSize &&
-                  quantity > selectedSize.stock)
-              }
+  !productId ||
+  !size ||
+  quantity < 1
+}
             >
               {type === "IN"
                 ? "Simpan Barang Masuk"
@@ -277,6 +335,7 @@ export function StockMove({
           </div>
         </form>
       </Card>
-    </AppLayout>
+    </div>
+    </>
   );
 }

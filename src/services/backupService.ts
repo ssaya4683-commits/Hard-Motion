@@ -1,8 +1,17 @@
 import { saveAs } from "file-saver";
 import { db } from "../db/db";
 
-export async function exportBackup() {
-  const backup = {
+export type BackupData = {
+  version: number;
+  createdAt: string;
+  products: unknown[];
+  productSizes: unknown[];
+  productImages: unknown[];
+  transactions: unknown[];
+};
+
+export async function createBackup(): Promise<BackupData> {
+  return {
     version: 1,
     createdAt: new Date().toISOString(),
 
@@ -11,6 +20,10 @@ export async function exportBackup() {
     productImages: await db.productImages.toArray(),
     transactions: await db.transactions.toArray(),
   };
+}
+
+export async function exportBackup() {
+  const backup = await createBackup();
 
   const blob = new Blob(
     [JSON.stringify(backup, null, 2)],
@@ -70,4 +83,37 @@ export async function restoreBackup(file: File) {
       }
     }
   );
+}
+
+/*
+|--------------------------------------------------------------------------
+| AUTO BACKUP
+|--------------------------------------------------------------------------
+*/
+
+const AUTO_BACKUP_KEY = "hard-motion-auto-backup";
+
+export async function createAutoBackup() {
+  const backup = await createBackup();
+
+  localStorage.setItem(
+    AUTO_BACKUP_KEY,
+    JSON.stringify(backup)
+  );
+}
+
+export function getAutoBackup(): BackupData | null {
+  const raw = localStorage.getItem(AUTO_BACKUP_KEY);
+
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function clearAutoBackup() {
+  localStorage.removeItem(AUTO_BACKUP_KEY);
 }

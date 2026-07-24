@@ -4,7 +4,6 @@ import {
 } from "react";
 
 import { Card } from "../components/common/Card";
-import { AppLayout } from "../layouts/AppLayout";
 import { useInventory } from "../hooks/useInventory";
 import { formatDate } from "../utils/format";
 export function History() {
@@ -69,7 +68,7 @@ export function History() {
     ]);
 
   return (
-    <AppLayout>
+    <div className="space-y-6">
       <Card>
         <h1 className="mb-6 text-3xl font-black">
           Riwayat Transaksi
@@ -225,6 +224,6 @@ export function History() {
           </table>
         </div>
       </Card>
-    </AppLayout>
+    </div>
   );
 }

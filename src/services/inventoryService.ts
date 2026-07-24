@@ -1,4 +1,7 @@
 import { db } from "../db/db";
+import {
+  createAutoBackup,
+} from "./backupService";
 
 import type {
   Product,
@@ -7,6 +10,7 @@ import type {
   Transaction,
   TransactionType,
 } from "../types";
+
 
 const now = () => new Date().toISOString();
 
@@ -57,6 +61,10 @@ export const inventoryService = {
     return products.map(
       (product) => ({
         ...product,
+        
+        barcode: String(
+      (product as any).barcode ?? ""
+    ).trim(),
 
         purchasePrice:
           product.purchasePrice ??
@@ -139,12 +147,16 @@ export const inventoryService = {
     } = product;
 
     const payload = {
-      ...productData,
+  ...productData,
 
-      sku,
+  barcode: String(
+    productData.barcode ?? ""
+  ).trim(),
 
-      updatedAt: now(),
-    };
+  sku,
+
+  updatedAt: now(),
+};
 
     /*
      |--------------------------------------------------------------------------
@@ -153,25 +165,35 @@ export const inventoryService = {
      */
 
     if (product.id) {
-      await db.transaction(
-        "rw",
-        db.products,
-        db.productSizes,
-        async () => {
-          await db.products.update(
-            product.id!,
-            payload
-          );
+  try {
+    await db.transaction(
+      "rw",
+      db.products,
+      db.productSizes,
+      async () => {
+        await db.products.update(
+          product.id!,
+          payload
+        );
 
-          await this.saveSizes(
-            product.id!,
-            sizes
-          );
-        }
-      );
+        await this.saveSizes(
+          product.id!,
+          sizes
+        );
+      }
+    );
 
-      return;
-    }
+    await createAutoBackup();
+  } catch (error) {
+    console.error(
+      "TRANSACTION ERROR",
+      error
+    );
+    throw error;
+  }
+
+  return;
+}
 
     /*
      |--------------------------------------------------------------------------
@@ -304,13 +326,19 @@ export const inventoryService = {
     throw new Error("Ukuran tidak ditemukan.");
   }
 
-  const nextSizeStock =
-    type === "IN"
-      ? selected.stock + quantity
-      : Math.max(
-          0,
-          selected.stock - quantity
-        );
+  if (
+  type === "OUT" &&
+  quantity > selected.stock
+) {
+  throw new Error(
+    `Stok ukuran ${size} hanya tersedia ${selected.stock} pasang.`
+  );
+}
+
+const nextSizeStock =
+  type === "IN"
+    ? selected.stock + quantity
+    : selected.stock - quantity;
 
   await db.transaction(
     "rw",
@@ -347,6 +375,7 @@ export const inventoryService = {
       } as Transaction);
     }
   );
+  await createAutoBackup();
 },
 
   /*

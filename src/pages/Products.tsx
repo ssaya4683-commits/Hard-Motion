@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 
-import { AppLayout } from "../layouts/AppLayout";
 import { Card } from "../components/common/Card";
 
 import { ProductForm } from "./ProductForm";
@@ -161,7 +160,7 @@ export function Products() {
   }
 
   return (
-    <AppLayout>
+    <div className="space-y-6">
   <div className="space-y-6">
 
     <div className="flex flex-col justify-between gap-3 sm:flex-row">
@@ -297,6 +296,6 @@ export function Products() {
       />
 
     </div>
-  </AppLayout>
+  </div>
   );
 }

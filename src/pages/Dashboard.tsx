@@ -16,12 +16,18 @@ import {
 } from "recharts";
 
 import { Card } from "../components/common/Card";
-import { AppLayout } from "../layouts/AppLayout";
 import { useInventory } from "../hooks/useInventory";
 import { formatCurrency, formatDate } from "../utils/format";
+import { dashboardService } from "../services/dashboardService";
 
 export function Dashboard() {
   const { products, transactions, summary } = useInventory();
+  const today = dashboardService.getTodaySummary(transactions);
+
+const topStock = dashboardService.getTopStock(products);
+
+const outOfStock =
+  dashboardService.getOutOfStock(products);
   const lowStockProducts = products
   .filter(
     (product) =>
@@ -55,7 +61,7 @@ const latestTransactions =
   ] as const;
 
   return (
-    <AppLayout>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-black">
@@ -124,10 +130,13 @@ const latestTransactions =
       {transactions.length}
     </h3>
 
-    <p className="mt-2 text-sm text-slate-500">
-      Seluruh riwayat transaksi
-      yang telah tercatat.
-    </p>
+    <h3 className="mt-2 text-3xl font-black">
+  {today.transactions}
+</h3>
+
+<p className="mt-2 text-sm text-slate-500">
+  Transaksi yang terjadi hari ini.
+</p>
   </Card>
 
   <Card>
@@ -136,32 +145,35 @@ const latestTransactions =
     </p>
 
     <h3 className="mt-2 text-3xl font-black">
-      {products.filter(
-        (product) => product.stock > 0
-      ).length}
-    </h3>
+  {outOfStock.length}
+</h3>
 
     <p className="mt-2 text-sm text-slate-500">
-      Produk yang masih memiliki
-      stok tersedia.
-    </p>
+  Produk yang stoknya sudah habis.
+</p>
   </Card>
 </div>
 
         <div className="grid gap-6 xl:grid-cols-3">
   <Card className="xl:col-span-2">
     <h2 className="mb-4 text-xl font-bold">
-      Grafik Stok Produk
-    </h2>
+  Top 5 Produk dengan Stok Terbanyak
+</h2>
 
     <ResponsiveContainer
       width="100%"
       height={320}
     >
-      <BarChart data={products}>
+      <BarChart data={topStock}>
         <CartesianGrid strokeDasharray="3 3" />
 
-        <XAxis dataKey="name" />
+        <XAxis
+  dataKey="name"
+  interval={0}
+  angle={-20}
+  textAnchor="end"
+  height={70}
+/>
 
         <YAxis />
 
@@ -301,6 +313,6 @@ const latestTransactions =
 </Card>
         </div>
       </div>
-    </AppLayout>
+    </div>
   );
 }

@@ -202,37 +202,36 @@ export function ProductForm({
   });
 
   useEffect(() => {
-  reset(product ?? defaults);
+  let cancelled = false;
 
-  setImage(product?.image ?? "");
+  async function init() {
+    reset(product ?? defaults);
 
-  setDuplicateSku("");
+    setImage(product?.image ?? "");
+    setDuplicateSku("");
 
-  async function loadSizes() {
     if (!product?.id) {
-      setSizes(
-        SHOE_SIZES.map((size) => ({
-          size,
-          stock: 0,
-          createdAt: "",
-        }))
-      );
-
+      if (!cancelled) {
+        setSizes(
+          SHOE_SIZES.map((size) => ({
+            size,
+            stock: 0,
+            createdAt: "",
+          }))
+        );
+      }
       return;
     }
 
-    const saved =
-      await inventoryService.getSizes(
-        product.id
-      );
+    const saved = await inventoryService.getSizes(product.id);
+
+    if (cancelled) return;
 
     setSizes(
       SHOE_SIZES.map((size) => {
-        const existing =
-          saved.find(
-            (item) =>
-              item.size === size
-          );
+        const existing = saved.find(
+          (item) => item.size === size
+        );
 
         return (
           existing ?? {
@@ -245,8 +244,12 @@ export function ProductForm({
     );
   }
 
-  void loadSizes();
-}, [product, reset]);
+  void init();
+
+  return () => {
+    cancelled = true;
+  };
+}, [product?.id]);
 
   const inputClass =
     "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-950";
@@ -271,6 +274,11 @@ export function ProductForm({
 
               return;
             }
+            console.log("SAVE", {
+  image,
+  totalStock,
+  sizes,
+});
 
             await onSave({
               ...data,
