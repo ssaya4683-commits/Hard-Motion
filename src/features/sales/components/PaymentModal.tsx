@@ -2,13 +2,14 @@ import { useState } from "react";
 
 import { Button } from "../../../components/common/Button";
 import { formatCurrency } from "../../../utils/format";
+import type { SalePayment } from "../services/salesService";
 
 interface PaymentModalProps {
   open: boolean;
   total: number;
   loading?: boolean;
   onClose: () => void;
-  onConfirm: (payment: { method: string; paidAmount: number }) => Promise<void> | void;
+  onConfirm: (payment: SalePayment) => Promise<void> | void;
 }
 
 export function PaymentModal({

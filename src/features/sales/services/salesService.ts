@@ -16,11 +16,15 @@ export interface SaleRecord {
 const STORAGE_KEY = "hard-motion-sales";
 
 export const salesService = {
+  generateInvoiceNumber() {
+    return `INV-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+  },
+
   async save({
     items,
     subtotal,
     payment,
-  }: Omit<SaleRecord, "id" | "createdAt">) {
+  }: Omit<SaleRecord, "id" | "createdAt">): Promise<SaleRecord> {
     const sale: SaleRecord = {
       id: crypto.randomUUID(),
       items,
