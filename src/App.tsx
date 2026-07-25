@@ -9,6 +9,7 @@ import { StockMove } from "./pages/StockMove";
 import { History } from "./pages/History";
 import { Reports } from "./pages/Reports";
 import { Settings } from "./pages/Settings";
+import { SalesPage } from "./features/sales/pages/SalesPage";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/sales" element={<SalesPage />} />
         <Route
           path="/stock-in"
           element={<StockMove type="IN" />}
