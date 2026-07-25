@@ -16,6 +16,7 @@ import { NavLink } from "react-router-dom";
 const nav = [
   ["/", "Dashboard", Home],
   ["/products", "Produk", Package],
+  ["/sales", "POS", ShoppingCart],
   ["/stock-in", "Barang Masuk", Truck],
   ["/stock-out", "Barang Keluar", ShoppingCart],
   ["/history", "Riwayat", Menu],
