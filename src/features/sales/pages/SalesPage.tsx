@@ -7,8 +7,13 @@ import { inventoryService } from "../../../services/inventoryService";
 import { formatCurrency } from "../../../utils/format";
 import type { Product, ProductSize } from "../../../types";
 import { PaymentModal } from "../components/PaymentModal";
-import { useCart } from "../hooks/useCart";
+import { useCart, type CartItem } from "../hooks/useCart";
 import { salesService, type SalePayment } from "../services/salesService";
+
+interface PendingStockMove {
+  product: Product;
+  item: CartItem;
+}
 
 export function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -76,7 +81,7 @@ export function SalesPage() {
 
     try {
       const latestProducts = await inventoryService.getProducts();
-      const stockMoves = [];
+      const stockMoves: PendingStockMove[] = [];
 
       for (const item of cart.items) {
         const product = latestProducts.find((candidate) => candidate.id === item.productId);
