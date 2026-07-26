@@ -303,12 +303,14 @@ export const inventoryService = {
   type,
   quantity,
   note,
+  transactionMeta,
 }: {
   product: Product;
   size: number;
   type: TransactionType;
   quantity: number;
   note: string;
+  transactionMeta?: Partial<Transaction>;
 }) {
   const productId = product.id;
 
@@ -365,13 +367,14 @@ const nextSizeStock =
       );
 
       await db.transactions.add({
+        ...transactionMeta,
         productId,
         productName: product.name,
         size,
         type,
         quantity,
         note,
-        createdAt: now(),
+        createdAt: transactionMeta?.createdAt ?? now(),
       } as Transaction);
     }
   );

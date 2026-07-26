@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "../../../components/common/Button";
@@ -26,6 +27,7 @@ export function SalesPage() {
   const [error, setError] = useState("");
 
   const cart = useCart();
+  const navigate = useNavigate();
 
   const loadProducts = async () => {
     const nextProducts = await inventoryService.getProducts();
@@ -102,7 +104,7 @@ export function SalesPage() {
         stockMoves.push({ product, item });
       }
 
-      await salesService.save({
+      const sale = await salesService.save({
         items: cart.items,
         subtotal: cart.subtotal,
         payment,
@@ -114,7 +116,21 @@ export function SalesPage() {
           size: item.size,
           type: "OUT",
           quantity: item.quantity,
-          note: `Penjualan POS - ${item.productName}`,
+          note: `Penjualan POS - ${sale.invoiceNumber}`,
+          transactionMeta: {
+            saleId: sale.id,
+            invoiceNumber: sale.invoiceNumber,
+            customerName: sale.customerName,
+            sku: item.sku,
+            price: item.price,
+            subtotal: sale.subtotal,
+            total: sale.total,
+            paymentMethod: sale.payment.method,
+            paidAmount: sale.payment.paidAmount,
+            paymentNotes: sale.notes,
+            saleCreatedAt: sale.createdAt,
+            createdAt: sale.createdAt,
+          },
         });
       }
 
@@ -122,6 +138,7 @@ export function SalesPage() {
       setShowPayment(false);
       await loadProducts();
       toast.success("Transaksi berhasil disimpan dan stok dikurangi.");
+      navigate(`/receipt/${sale.id}`);
     } catch (checkoutError) {
       const message = checkoutError instanceof Error
         ? checkoutError.message
