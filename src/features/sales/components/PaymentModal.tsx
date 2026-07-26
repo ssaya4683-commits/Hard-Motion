@@ -21,6 +21,8 @@ export function PaymentModal({
 }: PaymentModalProps) {
   const [method, setMethod] = useState("CASH");
   const [paidAmount, setPaidAmount] = useState(total);
+  const [customerName, setCustomerName] = useState("Walk-in Customer");
+  const [notes, setNotes] = useState("");
 
   if (!open) {
     return null;
@@ -33,6 +35,16 @@ export function PaymentModal({
         <p className="mt-2 text-sm text-slate-500">Total checkout: {formatCurrency(total)}</p>
 
         <div className="mt-5 space-y-4">
+          <label className="block text-sm font-medium">
+            Customer
+            <input
+              value={customerName}
+              onChange={(event) => setCustomerName(event.target.value)}
+              placeholder="Nama customer"
+              className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+
           <label className="block text-sm font-medium">
             Metode Pembayaran
             <select
@@ -56,6 +68,16 @@ export function PaymentModal({
               className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
             />
           </label>
+
+          <label className="block text-sm font-medium">
+            Notes
+            <textarea
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Catatan transaksi"
+              className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
@@ -64,7 +86,7 @@ export function PaymentModal({
           </Button>
           <Button
             type="button"
-            onClick={() => onConfirm({ method, paidAmount })}
+            onClick={() => onConfirm({ method, paidAmount, customerName, notes })}
             disabled={loading || paidAmount < total}
           >
             {loading ? "Memproses..." : "Konfirmasi"}

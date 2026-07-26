@@ -17,6 +17,7 @@ const nav = [
   ["/", "Dashboard", Home],
   ["/products", "Produk", Package],
   ["/sales", "POS", ShoppingCart],
+  ["/sales-history", "Sales History", Menu],
   ["/stock-in", "Barang Masuk", Truck],
   ["/stock-out", "Barang Keluar", ShoppingCart],
   ["/history", "Riwayat", Menu],
