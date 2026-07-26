@@ -75,5 +75,21 @@ export interface Transaction {
 
   note?: string;
 
+  /**
+   * Optional POS receipt metadata stored on sale stock-out rows.
+   * These fields are not indexed and do not change the Dexie schema.
+   */
+  saleId?: string;
+  invoiceNumber?: string;
+  customerName?: string;
+  sku?: string;
+  price?: number;
+  subtotal?: number;
+  total?: number;
+  paymentMethod?: string;
+  paidAmount?: number;
+  paymentNotes?: string;
+  saleCreatedAt?: string;
+
   createdAt: string;
 }
