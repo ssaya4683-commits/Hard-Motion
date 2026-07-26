@@ -1,148 +1,216 @@
 import type { Product, Transaction } from "../types";
 
-function isToday(date: string) {
-  const today = new Date();
-  const value = new Date(date);
+export type DashboardPeriod = "today" | "week" | "month" | "all";
 
-  return (
-    today.getFullYear() === value.getFullYear() &&
-    today.getMonth() === value.getMonth() &&
-    today.getDate() === value.getDate()
-  );
-}
+export type SalesChartPoint = {
+  label: string;
+  sales: number;
+};
+
+export type TopSellingProduct = {
+  productId: number;
+  name: string;
+  sku: string;
+  quantity: number;
+  revenue: number;
+};
+
+export type StockCategoryPoint = {
+  category: string;
+  stock: number;
+};
+
+const getStartOfDay = (date = new Date()) => {
+  const value = new Date(date);
+  value.setHours(0, 0, 0, 0);
+  return value;
+};
+
+const isSameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+const getTransactionAmount = (
+  transaction: Transaction,
+  product?: Product
+) => {
+  if (typeof transaction.subtotal === "number") {
+    return transaction.subtotal;
+  }
+
+  if (typeof transaction.total === "number") {
+    return transaction.total;
+  }
+
+  if (typeof transaction.price === "number") {
+    return transaction.price * transaction.quantity;
+  }
+
+  return (product?.sellingPrice ?? 0) * transaction.quantity;
+};
+
+const getPeriodStart = (period: DashboardPeriod) => {
+  const now = new Date();
+
+  if (period === "today") {
+    return getStartOfDay(now);
+  }
+
+  if (period === "week") {
+    const start = getStartOfDay(now);
+    const day = start.getDay();
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + mondayOffset);
+    return start;
+  }
+
+  if (period === "month") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+
+  return null;
+};
 
 export const dashboardService = {
-  getTodaySummary(transactions: Transaction[]) {
-    const today = transactions.filter((t) =>
-      isToday(t.createdAt)
+  filterTransactionsByPeriod(
+    transactions: Transaction[],
+    period: DashboardPeriod
+  ) {
+    const start = getPeriodStart(period);
+
+    if (!start) return transactions;
+
+    return transactions.filter(
+      (transaction) => new Date(transaction.createdAt) >= start
+    );
+  },
+
+  getTodaySummary(
+    transactions: Transaction[],
+    products: Product[]
+  ) {
+    const today = getStartOfDay();
+    const productById = new Map(
+      products.map((product) => [product.id, product])
     );
 
-    const stockIn = today
-      .filter((t) => t.type === "IN")
-      .reduce((sum, t) => sum + t.quantity, 0);
-
-    const stockOut = today
-      .filter((t) => t.type === "OUT")
-      .reduce((sum, t) => sum + t.quantity, 0);
+    const salesTransactions = transactions.filter((transaction) => {
+      const createdAt = new Date(transaction.createdAt);
+      return transaction.type === "OUT" && isSameDay(createdAt, today);
+    });
 
     return {
-      transactions: today.length,
-      stockIn,
-      stockOut,
+      transactions: salesTransactions.length,
+      sales: salesTransactions.reduce(
+        (sum, transaction) =>
+          sum + getTransactionAmount(transaction, productById.get(transaction.productId)),
+        0
+      ),
     };
   },
 
-  getTopStock(products: Product[], limit = 5) {
-    return [...products]
-      .sort((a, b) => b.stock - a.stock)
-      .slice(0, limit);
-  },
+  getLowStock(products: Product[], limit?: number) {
+    const items = [...products]
+      .filter((product) => product.stock > 0 && product.stock <= product.minimumStock)
+      .sort((a, b) => a.stock - b.stock);
 
-  getLowStock(products: Product[], limit = 5) {
-    return [...products]
-      .filter(
-        (p) =>
-          p.stock > 0 &&
-          p.stock <= p.minimumStock
-      )
-      .sort((a, b) => a.stock - b.stock)
-      .slice(0, limit);
+    return typeof limit === "number" ? items.slice(0, limit) : items;
   },
 
   getOutOfStock(products: Product[]) {
-    return products.filter(
-      (p) => p.stock === 0
-    );
+    return products.filter((product) => product.stock === 0);
   },
 
   getInventoryValue(products: Product[]) {
     return products.reduce(
-      (sum, p) =>
-        sum + p.purchasePrice * p.stock,
+      (sum, product) => sum + product.purchasePrice * product.stock,
       0
     );
   },
-  getRecentTransactions(
-  transactions: Transaction[],
-  limit = 10
-) {
-  return [...transactions]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() -
-        new Date(a.createdAt).getTime()
-    )
-    .slice(0, limit);
-},
 
-getTopSellingProducts(
-  transactions: Transaction[],
-  products: Product[],
-  limit = 5
-) {
-  const totals = new Map<number, number>();
+  getRecentTransactions(transactions: Transaction[], limit = 10) {
+    return [...transactions]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, limit);
+  },
 
-  transactions
-    .filter((t) => t.type === "OUT")
-    .forEach((t) => {
-      totals.set(
-        t.productId,
-        (totals.get(t.productId) ?? 0) + t.quantity
-      );
+  getSalesLastSevenDays(
+    transactions: Transaction[],
+    products: Product[]
+  ): SalesChartPoint[] {
+    const productById = new Map(products.map((product) => [product.id, product]));
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = getStartOfDay();
+      date.setDate(date.getDate() - (6 - index));
+
+      const sales = transactions
+        .filter(
+          (transaction) =>
+            transaction.type === "OUT" &&
+            isSameDay(new Date(transaction.createdAt), date)
+        )
+        .reduce(
+          (sum, transaction) =>
+            sum + getTransactionAmount(transaction, productById.get(transaction.productId)),
+          0
+        );
+
+      return {
+        label: date.toLocaleDateString("id-ID", { day: "2-digit", month: "short" }),
+        sales,
+      };
+    });
+  },
+
+  getTopSellingProducts(
+    transactions: Transaction[],
+    products: Product[],
+    limit = 10
+  ): TopSellingProduct[] {
+    const productById = new Map(products.map((product) => [product.id, product]));
+    const totals = new Map<number, { quantity: number; revenue: number }>();
+
+    transactions
+      .filter((transaction) => transaction.type === "OUT")
+      .forEach((transaction) => {
+        const current = totals.get(transaction.productId) ?? { quantity: 0, revenue: 0 };
+        const product = productById.get(transaction.productId);
+
+        totals.set(transaction.productId, {
+          quantity: current.quantity + transaction.quantity,
+          revenue: current.revenue + getTransactionAmount(transaction, product),
+        });
+      });
+
+    return [...totals.entries()]
+      .map(([productId, total]) => {
+        const product = productById.get(productId);
+        return {
+          productId,
+          name: product?.name ?? "Produk terhapus",
+          sku: product?.sku ?? "-",
+          ...total,
+        };
+      })
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, limit);
+  },
+
+  getStockByCategory(products: Product[]): StockCategoryPoint[] {
+    const totals = new Map<string, number>();
+
+    products.forEach((product) => {
+      const category = product.category || "Tanpa Kategori";
+      totals.set(category, (totals.get(category) ?? 0) + product.stock);
     });
 
-  return [...totals.entries()]
-    .map(([productId, sold]) => ({
-      product: products.find(
-        (p) => p.id === productId
-      ),
-      sold,
-    }))
-    .filter((item) => item.product)
-    .sort((a, b) => b.sold - a.sold)
-    .slice(0, limit);
-},
-
-getWeeklyTransactions(
-  transactions: Transaction[]
-) {
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-
-    return {
-      label: date.toLocaleDateString("id-ID", {
-        weekday: "short",
-      }),
-      IN: 0,
-      OUT: 0,
-      date,
-    };
-  });
-
-  transactions.forEach((t) => {
-    const txDate = new Date(t.createdAt);
-
-    const day = days.find(
-      (d) =>
-        d.date.getFullYear() === txDate.getFullYear() &&
-        d.date.getMonth() === txDate.getMonth() &&
-        d.date.getDate() === txDate.getDate()
-    );
-
-    if (!day) return;
-
-    if (t.type === "IN") {
-      day.IN += t.quantity;
-    } else {
-      day.OUT += t.quantity;
-    }
-  });
-
-  return days.map(({ label, IN, OUT }) => ({
-    label,
-    IN,
-    OUT,
-  }));
-},
+    return [...totals.entries()]
+      .map(([category, stock]) => ({ category, stock }))
+      .sort((a, b) => b.stock - a.stock);
+  },
 };
