@@ -9,6 +9,7 @@ import { StockMove } from "./pages/StockMove";
 import { History } from "./pages/History";
 import { Reports } from "./pages/Reports";
 import { Settings } from "./pages/Settings";
+import { ImportProducts } from "./pages/ImportProducts";
 import { SalesPage } from "./features/sales/pages/SalesPage";
 import { SalesHistoryPage } from "./features/sales/pages/SalesHistoryPage";
 import { ReceiptPage } from "./features/receipt/pages/ReceiptPage";
@@ -22,6 +23,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/import-products" element={<ImportProducts />} />
         <Route path="/sales" element={<SalesPage />} />
         <Route path="/sales-history" element={<SalesHistoryPage />} />
         <Route path="/receipt/:saleId" element={<ReceiptPage />} />

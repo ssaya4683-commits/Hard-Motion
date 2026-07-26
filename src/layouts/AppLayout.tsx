@@ -4,6 +4,7 @@ import {
   Menu,
   Moon,
   Package,
+  FileSpreadsheet,
   Settings,
   ShoppingCart,
   Sun,
@@ -16,6 +17,7 @@ import { NavLink } from "react-router-dom";
 const nav = [
   ["/", "Dashboard", Home],
   ["/products", "Produk", Package],
+  ["/import-products", "Import Produk", FileSpreadsheet],
   ["/sales", "POS", ShoppingCart],
   ["/sales-history", "Sales History", Menu],
   ["/stock-in", "Barang Masuk", Truck],
