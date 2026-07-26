@@ -10,6 +10,7 @@ import { History } from "./pages/History";
 import { Reports } from "./pages/Reports";
 import { Settings } from "./pages/Settings";
 import { SalesPage } from "./features/sales/pages/SalesPage";
+import { SalesHistoryPage } from "./features/sales/pages/SalesHistoryPage";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/products" element={<Products />} />
         <Route path="/sales" element={<SalesPage />} />
+        <Route path="/sales-history" element={<SalesHistoryPage />} />
         <Route
           path="/stock-in"
           element={<StockMove type="IN" />}
