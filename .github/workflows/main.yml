@@ -29,6 +29,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+            - name: Check lucide-react
+        run: |
+          npm list lucide-react
+          ls -la node_modules/lucide-react/dist/esm/icons | head -20
+          test -f node_modules/lucide-react/dist/esm/icons/mic-signal.mjs && echo "mic-signal exists" || echo "mic-signal MISSING"
 
       - name: Build
         run: npm run build
