@@ -1,53 +1,49 @@
 import {
-  BarChart3,
-  Home,
   Menu,
   Moon,
-  Package,
-  FileSpreadsheet,
-  Settings,
-  ShoppingCart,
   Sun,
-  Truck,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { NavLink } from "react-router-dom";
 
+import { navigation } from "../constants/navigation";
 
-const nav = [
-  ["/", "Dashboard", Home],
-  ["/products", "Produk", Package],
-  ["/import-products", "Import Produk", FileSpreadsheet],
-  ["/export-products", "Export Produk", FileSpreadsheet],
-  ["/sales", "POS", ShoppingCart],
-  ["/sales-history", "Sales History", Menu],
-  ["/stock-in", "Barang Masuk", Truck],
-  ["/stock-out", "Barang Keluar", ShoppingCart],
-  ["/history", "Riwayat", Menu],
-  ["/reports", "Laporan", BarChart3],
-  ["/settings", "Pengaturan", Settings],
-] as const;
+export function AppLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const [dark, setDark] = useState(
+    () => localStorage.theme === "dark"
+  );
 
-export function AppLayout({ children }: { children: ReactNode }) {
-  const [dark, setDark] = useState(() => localStorage.theme === "dark");
   const [open, setOpen] = useState(false);
 
-  document.documentElement.classList.toggle("dark", dark);
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      "dark",
+      dark
+    );
+  }, [dark]);
 
   const menu = (
     <nav className="space-y-2">
-      {nav.map(([to, label, Icon]) => (
+      {navigation.map(([to, label, Icon]) => (
         <NavLink
           key={to}
           to={to}
           onClick={() => setOpen(false)}
-          className={({ isActive }: { isActive: boolean }) =>
-  `flex items-center gap-3 rounded-xl px-4 py-3 transition ${
-    isActive
-      ? "bg-black text-white dark:bg-white dark:text-black"
-      : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-  }`
-}
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-xl px-4 py-3 transition ${
+              isActive
+                ? "bg-black text-white dark:bg-white dark:text-black"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            }`
+          }
         >
           <Icon size={18} />
           {label}
@@ -119,7 +115,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             onClick={() => {
               const next = !dark;
               setDark(next);
-              localStorage.theme = next ? "dark" : "light";
+              localStorage.theme = next
+                ? "dark"
+                : "light";
             }}
             className="rounded-xl border p-2 dark:border-slate-700"
           >
@@ -127,7 +125,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </header>
 
-        <div className="p-4 sm:p-6">{children}</div>
+        <div className="p-4 sm:p-6">
+          {children}
+        </div>
       </main>
     </div>
   );

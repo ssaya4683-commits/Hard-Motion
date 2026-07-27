@@ -14,12 +14,14 @@ import { ExportProducts } from "./pages/ExportProducts";
 import { SalesPage } from "./features/sales/pages/SalesPage";
 import { SalesHistoryPage } from "./features/sales/pages/SalesHistoryPage";
 import { ReceiptPage } from "./features/receipt/pages/ReceiptPage";
+import { LoadingProvider } from "./components/providers/LoadingProvider";
 
 export default function App() {
   return (
   <BrowserRouter basename={import.meta.env.BASE_URL}>
-    <ToastProvider />
+  <ToastProvider />
 
+  <LoadingProvider>
     <AppLayout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
@@ -42,6 +44,7 @@ export default function App() {
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </AppLayout>
-  </BrowserRouter>
+  </LoadingProvider>
+</BrowserRouter>
 );
 }

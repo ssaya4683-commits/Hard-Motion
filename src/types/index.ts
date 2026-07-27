@@ -93,3 +93,20 @@ export interface Transaction {
 
   createdAt: string;
 }
+export type SettingKey =
+  | "storeName"
+  | "currency"
+  | "theme"
+  | "autoBackup";
+
+export interface Setting {
+  id?: number;
+
+  key: SettingKey;
+
+  value: string;
+
+  createdAt: string;
+
+  updatedAt?: string;
+}

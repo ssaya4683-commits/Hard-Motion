@@ -1,96 +1,121 @@
-import { useRef } from "react";
+import { useEffect, useState } from "react";
+
 import { Card } from "../components/common/Card";
+import { BackupSection } from "../components/settings/BackupSection";
+
 import {
-  exportBackup,
-  restoreBackup,
-} from "../services/backupService";
+  getSettingsObject,
+  setSetting,
+} from "../services/settingsService";
 
 export function Settings() {
-  const fileInput =
-    useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleRestore = async (
-    file: File
-  ) => {
-    const ok = confirm(
-      "Restore akan mengganti seluruh data yang ada. Lanjutkan?"
-    );
+  const [storeName, setStoreName] = useState("");
+  const [currency, setCurrency] = useState("");
 
-    if (!ok) return;
+  useEffect(() => {
+    async function loadSettings() {
+      const settings = await getSettingsObject();
 
-    try {
-      await restoreBackup(file);
+      setStoreName(settings.storeName);
+      setCurrency(settings.currency);
 
-      alert(
-        "Restore berhasil. Aplikasi akan dimuat ulang."
-      );
-
-      location.reload();
-    } catch (err) {
-      console.error(err);
-
-      alert("Restore gagal.");
+      setLoading(false);
     }
-  };
+
+    loadSettings();
+  }, []);
+
+  async function handleStoreNameBlur() {
+    await setSetting("storeName", storeName);
+  }
+
+  async function handleCurrencyBlur() {
+    await setSetting("currency", currency);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-slate-500">
+          Memuat pengaturan...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <Card>
-      <h1 className="mb-3 text-3xl font-black">
-        Pengaturan
-      </h1>
+    <div className="space-y-8">
+      <Card>
+        <h1 className="text-3xl font-black">
+          Pengaturan
+        </h1>
 
-      <p className="text-slate-500">
-        Atur preferensi aplikasi dan
-        lakukan backup maupun restore
-        database.
-      </p>
+        <p className="mt-2 text-slate-500">
+          Kelola informasi toko dan pengaturan aplikasi Hard Motion.
+        </p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <input
-          className="rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950"
-          defaultValue="Hard Motion Store"
-        />
+        <div className="mt-8 grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Nama Toko
+            </label>
 
-        <input
-          className="rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950"
-          defaultValue="IDR"
-        />
-      </div>
+            <input
+              className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              onBlur={handleStoreNameBlur}
+            />
+          </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        <button
-          onClick={exportBackup}
-          className="rounded-xl bg-slate-900 px-5 py-2 text-white dark:bg-white dark:text-slate-900"
-        >
-          Backup Database
-        </button>
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Mata Uang
+            </label>
 
-        <button
-          onClick={() =>
-            fileInput.current?.click()
-          }
-          className="rounded-xl border px-5 py-2"
-        >
-          Restore Database
-        </button>
+            <input
+              className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              onBlur={handleCurrencyBlur}
+            />
+          </div>
+        </div>
+      </Card>
 
-        <input
-          ref={fileInput}
-          hidden
-          type="file"
-          accept=".json"
-          onChange={(e) => {
-            const file =
-              e.target.files?.[0];
+      <Card>
+        <BackupSection />
+      </Card>
 
-            if (file) {
-              void handleRestore(file);
-            }
+      <Card>
+        <h2 className="text-xl font-bold">
+          Tentang Aplikasi
+        </h2>
 
-            e.currentTarget.value = "";
-          }}
-        />
-      </div>
-    </Card>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border p-4 dark:border-slate-700">
+            <p className="text-sm text-slate-500">
+              Nama Aplikasi
+            </p>
+
+            <p className="mt-1 font-semibold">
+              Hard Motion
+            </p>
+          </div>
+
+          <div className="rounded-xl border p-4 dark:border-slate-700">
+            <p className="text-sm text-slate-500">
+              Versi
+            </p>
+
+            <p className="mt-1 font-semibold">
+              1.0.0
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 }

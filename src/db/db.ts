@@ -4,6 +4,7 @@ import type {
   Product,
   ProductImage,
   ProductSize,
+  Setting,
   Transaction,
 } from "../types";
 
@@ -11,16 +12,16 @@ class HardMotionDB extends Dexie {
   products!: Table<Product, number>;
   transactions!: Table<Transaction, number>;
 
-  // New Tables
   productImages!: Table<ProductImage, number>;
   productSizes!: Table<ProductSize, number>;
+
+  settings!: Table<Setting, number>;
 
   constructor() {
     super("hard-motion-db");
 
     /**
      * VERSION 1
-     * Database lama
      */
     this.version(1).stores({
       products:
@@ -32,7 +33,6 @@ class HardMotionDB extends Dexie {
 
     /**
      * VERSION 2
-     * Tambahan untuk Hard Motion v2
      */
     this.version(2).stores({
       products:
@@ -47,34 +47,62 @@ class HardMotionDB extends Dexie {
       productSizes:
         "++id,variantId,size,stock",
     });
+
+    /**
+     * VERSION 3
+     */
     this.version(3).stores({
-  products:
-    "++id,sku,barcode,name,category,brand,stock,minimumStock,createdAt",
+      products:
+        "++id,sku,barcode,name,category,brand,stock,minimumStock,createdAt",
 
-  transactions:
-    "++id,productId,type,size,createdAt",
+      transactions:
+        "++id,productId,type,size,createdAt",
 
-  productImages:
-    "++id,productId,isCover,createdAt",
+      productImages:
+        "++id,productId,isCover,createdAt",
 
-  productSizes:
-    "++id,productId,size,stock",
-});
-this.version(4).stores({
-  products:
-    "++id,sku,barcode,name,category,brand,stock,minimumStock,createdAt,updatedAt",
+      productSizes:
+        "++id,productId,size,stock",
+    });
 
-  transactions:
-    "++id,productId,type,size,createdAt",
+    /**
+     * VERSION 4
+     */
+    this.version(4).stores({
+      products:
+        "++id,sku,barcode,name,category,brand,stock,minimumStock,createdAt,updatedAt",
 
-  productImages:
-    "++id,productId,isCover,createdAt",
+      transactions:
+        "++id,productId,type,size,createdAt",
 
-  productSizes:
-    "++id,productId,size,stock",
-});
+      productImages:
+        "++id,productId,isCover,createdAt",
+
+      productSizes:
+        "++id,productId,size,stock",
+    });
+
+    /**
+     * VERSION 5
+     * Application Settings
+     */
+    this.version(5).stores({
+      products:
+        "++id,sku,barcode,name,category,brand,stock,minimumStock,createdAt,updatedAt",
+
+      transactions:
+        "++id,productId,type,size,createdAt",
+
+      productImages:
+        "++id,productId,isCover,createdAt",
+
+      productSizes:
+        "++id,productId,size,stock",
+
+      settings:
+        "++id,&key,createdAt",
+    });
   }
 }
-
 
 export const db = new HardMotionDB();
