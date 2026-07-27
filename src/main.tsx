@@ -5,6 +5,7 @@ import "./index.css";
 import App from "./App";
 
 import { initializeSettings } from "./services/settingsService";
+import { registerSW } from "virtual:pwa-register";
 
 async function bootstrap() {
   await initializeSettings();
@@ -17,3 +18,14 @@ async function bootstrap() {
 }
 
 bootstrap();
+registerSW({
+  immediate: true,
+
+  onOfflineReady() {
+    console.log("Hard Motion siap digunakan secara offline.");
+  },
+
+  onNeedRefresh() {
+    console.log("Versi baru tersedia. Refresh halaman untuk memperbarui.");
+  },
+});
