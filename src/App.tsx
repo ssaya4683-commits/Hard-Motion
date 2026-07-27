@@ -1,4 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  HashRouter,
+  Routes,
+  Route,
+} from "react-router-dom";;
 import { ToastProvider } from "./components/providers/ToastProvider";
 
 import { AppLayout } from "./layouts/AppLayout";
@@ -18,7 +22,7 @@ import { LoadingProvider } from "./components/providers/LoadingProvider";
 
 export default function App() {
   return (
-  <BrowserRouter basename={import.meta.env.BASE_URL}>
+  <HashRouter>
   <ToastProvider />
 
   <LoadingProvider>
@@ -45,6 +49,6 @@ export default function App() {
       </Routes>
     </AppLayout>
   </LoadingProvider>
-</BrowserRouter>
+</HashRouter>
 );
 }
