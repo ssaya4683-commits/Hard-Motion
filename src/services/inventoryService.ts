@@ -10,6 +10,7 @@ import type {
   Transaction,
   TransactionType,
 } from "../types";
+import { barcodeService } from "./barcodeService";
 
 
 const now = () => new Date().toISOString();
@@ -140,6 +141,20 @@ export const inventoryService = {
         "SKU already exists"
       );
     }
+    const barcode = String(
+  product.barcode ?? ""
+).trim();
+
+if (
+  await barcodeService.isBarcodeDuplicate(
+    barcode,
+    product.id
+  )
+) {
+  throw new Error(
+    "Barcode already exists"
+  );
+}
 
     const {
       sizes = [],
@@ -149,9 +164,8 @@ export const inventoryService = {
     const payload = {
   ...productData,
 
-  barcode: String(
-    productData.barcode ?? ""
-  ).trim(),
+  
+  barcode,
 
   sku,
 

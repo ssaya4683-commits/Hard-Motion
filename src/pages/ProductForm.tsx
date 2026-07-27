@@ -19,6 +19,7 @@ import type {
 } from "../types";
 
 import { fileToDataUrl } from "../utils/file";
+import { barcodeService } from "../services/barcodeService";
 
 const schema = z.object({
   sku: z
@@ -413,17 +414,32 @@ export function ProductForm({
             </label>
 
             <label className="text-sm font-semibold">
-              Barcode
+  Barcode
 
-              <input
-                className={
-                  inputClass
-                }
-                {...register(
-                  "barcode"
-                )}
-              />
-            </label>
+  <div className="mt-1 flex gap-2">
+    <input
+      className={inputClass + " mt-0 flex-1"}
+      {...register("barcode")}
+    />
+
+    <Button
+  type="button"
+  onClick={async () => {
+    const barcode =
+      await barcodeService.generateBarcode();
+
+    reset({
+      ...schema.parse(
+        product ?? defaults
+      ),
+      barcode,
+    });
+  }}
+>
+  Generate
+</Button>
+  </div>
+</label>
 
             <label className="text-sm font-semibold md:col-span-2">
               Product Name *

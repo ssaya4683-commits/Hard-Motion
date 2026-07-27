@@ -19,7 +19,7 @@ import { SalesPage } from "./features/sales/pages/SalesPage";
 import { SalesHistoryPage } from "./features/sales/pages/SalesHistoryPage";
 import { ReceiptPage } from "./features/receipt/pages/ReceiptPage";
 import { LoadingProvider } from "./components/providers/LoadingProvider";
-
+import { CustomerDisplay } from "./pages/CustomerDisplay";
 export default function App() {
   return (
   <HashRouter>
@@ -46,6 +46,10 @@ export default function App() {
         <Route path="/history" element={<History />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
+        <Route
+    path="/customer-display"
+    element={<CustomerDisplay />}
+/>
       </Routes>
     </AppLayout>
   </LoadingProvider>

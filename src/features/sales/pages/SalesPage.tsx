@@ -10,6 +10,9 @@ import type { Product, ProductSize } from "../../../types";
 import { PaymentModal } from "../components/PaymentModal";
 import { useCart, type CartItem } from "../hooks/useCart";
 import { salesService, type SalePayment } from "../services/salesService";
+import {
+  sendCustomerDisplay,
+} from "../../../services/customerDisplayService";
 
 interface PendingStockMove {
   product: Product;
@@ -76,6 +79,12 @@ export function SalesPage() {
     setError("");
     toast.success("Produk ditambahkan ke cart.");
   };
+  useEffect(() => {
+  sendCustomerDisplay({
+    items: cart.items,
+    subtotal: cart.subtotal,
+  });
+}, [cart.items, cart.subtotal]);
 
   const handleCheckout = async (payment: SalePayment) => {
     setCheckingOut(true);

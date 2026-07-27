@@ -202,14 +202,17 @@ export default function PrintBarcodeModal({
                   <div className="my-4 flex justify-center">
 
                     <ProductBarcode
-                      value={generateBarcodeValue(
-                        product.sku,
-                        item.size
-                      )}
-                      width={2}
-                      height={60}
-                      displayValue
-                    />
+  value={
+    product.barcode ||
+    generateBarcodeValue(
+      product.sku,
+      item.size
+    )
+  }
+  width={2}
+  height={60}
+  displayValue
+/>
 
                   </div>
 
