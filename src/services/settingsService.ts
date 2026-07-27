@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS: Record<SettingKey, string> = {
   currency: "IDR",
   theme: "system",
   autoBackup: "true",
+  storeWhatsapp: "",
 };
 
 export async function initializeSettings(): Promise<void> {
