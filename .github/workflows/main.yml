@@ -29,7 +29,8 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-            - name: Check lucide-react
+
+      - name: Check lucide-react
         run: |
           npm list lucide-react
           ls -la node_modules/lucide-react/dist/esm/icons | head -20
@@ -45,7 +46,6 @@ jobs:
 
   deploy:
     needs: build
-
     runs-on: ubuntu-latest
 
     environment:
