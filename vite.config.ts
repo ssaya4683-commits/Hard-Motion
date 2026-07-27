@@ -12,8 +12,6 @@ export default defineConfig({
     tailwindcss(),
 
     VitePWA({
-      injectRegister: "auto",
-      
       registerType: "autoUpdate",
 
       includeAssets: [
