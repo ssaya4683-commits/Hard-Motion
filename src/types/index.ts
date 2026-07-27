@@ -97,7 +97,8 @@ export type SettingKey =
   | "storeName"
   | "currency"
   | "theme"
-  | "autoBackup";
+  | "autoBackup"
+  | "storeWhatsapp";
 
 export interface Setting {
   id?: number;

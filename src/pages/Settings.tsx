@@ -13,6 +13,7 @@ export function Settings() {
 
   const [storeName, setStoreName] = useState("");
   const [currency, setCurrency] = useState("");
+  const [storeWhatsapp, setStoreWhatsapp] = useState("");
 
   useEffect(() => {
     async function loadSettings() {
@@ -20,6 +21,7 @@ export function Settings() {
 
       setStoreName(settings.storeName);
       setCurrency(settings.currency);
+      setStoreWhatsapp(settings.storeWhatsapp ?? "");
 
       setLoading(false);
     }
@@ -34,6 +36,12 @@ export function Settings() {
   async function handleCurrencyBlur() {
     await setSetting("currency", currency);
   }
+  async function handleWhatsappBlur() {
+  await setSetting(
+    "storeWhatsapp",
+    storeWhatsapp
+  );
+}
 
   if (loading) {
     return (
@@ -82,6 +90,21 @@ export function Settings() {
               onBlur={handleCurrencyBlur}
             />
           </div>
+          <div>
+  <label className="mb-2 block text-sm font-medium">
+    Nomor WhatsApp
+  </label>
+
+  <input
+    className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950"
+    placeholder="62812xxxxxxxx"
+    value={storeWhatsapp}
+    onChange={(e) =>
+      setStoreWhatsapp(e.target.value)
+    }
+    onBlur={handleWhatsappBlur}
+  />
+</div>
         </div>
       </Card>
 
