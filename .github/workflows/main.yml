@@ -22,19 +22,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+
+      - name: Clean npm cache
+        run: npm cache clean --force
+
+      - name: Remove node_modules
+        run: rm -rf node_modules
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Check lucide-react
-        run: |
-          npm list lucide-react
-          ls -la node_modules/lucide-react/dist/esm/icons | head -20
-          test -f node_modules/lucide-react/dist/esm/icons/mic-signal.mjs && echo "mic-signal exists" || echo "mic-signal MISSING"
+        run: npm ci
 
       - name: Build
         run: npm run build
