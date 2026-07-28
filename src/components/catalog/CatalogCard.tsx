@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Card } from "../common/Card";
 import { useInventory } from "../../hooks/useInventory";
+import { createWhatsappLink } from "../../utils/whatsapp";
 
 import type {
   Product,
@@ -26,6 +27,30 @@ export default function CatalogCard({
   const [coverImage, setCoverImage] = useState(
     product.image || "/no-image.png"
   );
+  const stockStatus =
+  stock === 0
+    ? {
+        label: "Habis",
+        className:
+          "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      }
+    : stock <= 5
+      ? {
+          label: "Stok Menipis",
+          className:
+            "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+        }
+      : {
+          label: "Tersedia",
+          className:
+            "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+        };
+        const whatsappLink = createWhatsappLink({
+  phone: localStorage.getItem("storeWhatsapp") || "",
+  productName: product.name,
+  price: product.sellingPrice,
+  sizes: sizes.map((size) => String(size.size)),
+});
 
   useEffect(() => {
     if (product.id == null) return;
@@ -63,18 +88,31 @@ export default function CatalogCard({
   ]);
 
   return (
-    <Card className="overflow-hidden rounded-2xl transition hover:shadow-xl">
-      <img
-        src={coverImage}
-        alt={product.name}
-        className="h-64 w-full object-cover"
-      />
+    <Card className="group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+      <div className="relative overflow-hidden">
+  <img
+    src={coverImage}
+    alt={product.name}
+    className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+  />
+
+  <div
+    className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold ${stockStatus.className}`}
+  >
+    {stockStatus.label}
+  </div>
+</div>
 
       <div className="space-y-4 p-5">
         <div>
           <h2 className="text-xl font-bold">
             {product.name}
           </h2>
+          {product.category && (
+  <p className="mt-1 text-sm text-slate-500">
+    {product.category}
+  </p>
+)}
 
           <p className="mt-1 text-2xl font-black text-blue-600">
             Rp{" "}
@@ -110,16 +148,26 @@ export default function CatalogCard({
             Total Stok
           </span>
 
-          <span
-            className={`rounded-lg px-3 py-1 text-sm font-bold ${
-              stock > 0
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-            }`}
-          >
-            {stock} Pasang
-          </span>
-        </div>
+          <div className="text-right">
+  <div
+    className={`inline-block rounded-lg px-3 py-1 text-sm font-bold ${stockStatus.className}`}
+  >
+    {stockStatus.label}
+  </div>
+
+  <p className="mt-1 text-xs text-slate-500">
+    {stock} Pasang
+  </p>
+</div>
+</div>
+<a
+  href={whatsappLink}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="mt-4 flex w-full items-center justify-center rounded-xl bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700"
+>
+  🟢 Pesan via WhatsApp
+</a>
       </div>
     </Card>
   );

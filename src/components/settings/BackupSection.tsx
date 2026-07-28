@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   exportBackup,
   readBackupFile,
   restoreBackupData,
+  getCurrentDatabaseSummary,
+getDatabaseSizeEstimate,
   type BackupData,
 } from "../../services/backupService";
 import { BackupPreviewCard } from "./BackupPreviewCard";
@@ -19,6 +21,22 @@ export function BackupSection() {
 
   const [loading, setLoading] =
     useState(false);
+    const [summary, setSummary] = useState<Awaited<
+  ReturnType<typeof getCurrentDatabaseSummary>
+> | null>(null);
+
+const [dbSize, setDbSize] = useState(0);
+useEffect(() => {
+  async function loadInfo() {
+    const info = await getCurrentDatabaseSummary();
+    const size = await getDatabaseSizeEstimate();
+
+    setSummary(info);
+    setDbSize(size.kilobytes);
+  }
+
+  void loadInfo();
+}, []);
 
   const handleChooseFile = async (
     file: File
@@ -82,6 +100,21 @@ export function BackupSection() {
         Simpan cadangan database atau
         pulihkan data dari file backup.
       </p>
+      {summary && (
+  <div className="mt-5 rounded-xl border p-4">
+    <h3 className="font-semibold">
+      Informasi Database
+    </h3>
+
+    <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+      <p>Produk : {summary.products}</p>
+      <p>Transaksi : {summary.transactions}</p>
+      <p>Images : {summary.productImages}</p>
+      <p>Ukuran : {dbSize} KB</p>
+      <p>Total Record : {summary.totalRecords}</p>
+    </div>
+  </div>
+)}
 
       <div className="mt-6 flex flex-wrap gap-3">
 

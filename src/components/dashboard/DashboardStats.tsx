@@ -38,21 +38,33 @@ export function DashboardStats({
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {stats.map(([label, value, Icon]) => (
-        <Card key={label} className="bg-gradient-to-br from-white to-amber-50/60 dark:from-slate-900 dark:to-slate-800">
+        <Card
+  key={label}
+  className="
+    border border-slate-200/60
+    bg-white
+    transition-all
+    duration-300
+    hover:-translate-y-1
+    hover:shadow-xl
+    dark:border-slate-700
+    dark:bg-slate-900
+  "
+>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
                 {label}
               </p>
 
-              <strong className="mt-2 block text-2xl font-black text-slate-950 dark:text-white">
+              <strong className="mt-3 block text-3xl font-black tracking-tight text-slate-950 dark:text-white">
                 {value}
               </strong>
             </div>
 
-            <div className="rounded-2xl bg-amber-500/10 p-3">
-              <Icon className="text-amber-700 dark:text-amber-400" />
-            </div>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/20">
+  <Icon className="h-7 w-7 text-white" />
+</div>
           </div>
         </Card>
       ))}

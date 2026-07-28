@@ -19,6 +19,12 @@ export type StockCategoryPoint = {
   category: string;
   stock: number;
 };
+export type TodayInsight = {
+  transactions: number;
+  sales: number;
+  itemsSold: number;
+  averageTransaction: number;
+};
 
 const getStartOfDay = (date = new Date()) => {
   const value = new Date(date);
@@ -109,6 +115,48 @@ export const dashboardService = {
       ),
     };
   },
+  getTodayInsight(
+  transactions: Transaction[],
+  products: Product[]
+): TodayInsight {
+  const today = getStartOfDay();
+
+  const productById = new Map(
+    products.map((product) => [product.id, product])
+  );
+
+  const todaySales = transactions.filter((transaction) => {
+    return (
+      transaction.type === "OUT" &&
+      isSameDay(new Date(transaction.createdAt), today)
+    );
+  });
+
+  const sales = todaySales.reduce(
+    (sum, transaction) =>
+      sum +
+      getTransactionAmount(
+        transaction,
+        productById.get(transaction.productId)
+      ),
+    0
+  );
+
+  const itemsSold = todaySales.reduce(
+    (sum, transaction) => sum + transaction.quantity,
+    0
+  );
+
+  return {
+    transactions: todaySales.length,
+    sales,
+    itemsSold,
+    averageTransaction:
+      todaySales.length === 0
+        ? 0
+        : sales / todaySales.length,
+  };
+},
 
   getLowStock(products: Product[], limit?: number) {
     const items = [...products]

@@ -29,6 +29,10 @@ export function useDashboard() {
   const summary = useMemo(
     () => ({
       today: dashboardService.getTodaySummary(transactions, products),
+      todayInsight: dashboardService.getTodayInsight(
+  transactions,
+  products
+),
       inventoryValue: dashboardService.getInventoryValue(products),
       lowStock: dashboardService.getLowStock(products),
       outOfStock: dashboardService.getOutOfStock(products),

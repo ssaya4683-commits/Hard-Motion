@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card } from "../components/common/Card";
 
@@ -14,6 +14,7 @@ import { getStockStatus } from "../services/inventoryService";
 import { exportProductsToExcel } from "../services/excelService";
 
 import type { Product } from "../types";
+import { useSearchParams } from "react-router-dom";
 
 type SortKey =
   | "name"
@@ -29,6 +30,7 @@ type StockFilter =
   | "out";
 
 export function Products() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     products,
     saveProduct,
@@ -143,6 +145,13 @@ export function Products() {
     setEditing(undefined);
     setShowForm(true);
   }
+  useEffect(() => {
+  if (searchParams.get("new") === "1") {
+    openAdd();
+
+    setSearchParams({}, { replace: true });
+  }
+}, [searchParams]);
 
   function openEdit(product: Product) {
     setEditing(product);
