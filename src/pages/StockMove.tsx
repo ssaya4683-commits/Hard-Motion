@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { BarcodeScannerModal } from "../components/barcode/BarcodeScannerModal";
 import { Button } from "../components/common/Button";
@@ -12,12 +13,15 @@ export function StockMove({
 }: {
   type: TransactionType;
 }) {
+  const navigate = useNavigate();
   const { products, moveStock, getSizes } = useInventory();
   const [productId, setProductId] = useState("");
   const [barcode, setBarcode] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [notFoundBarcode, setNotFoundBarcode] = useState("");
   const productRef = useRef<HTMLSelectElement>(null);
   const barcodeRef = useRef<HTMLInputElement>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
   const [size, setSize] = useState("");
   const [sizes, setSizes] = useState<ProductSize[]>([]);
   const [quantity, setQuantity] = useState(1);
@@ -62,10 +66,7 @@ export function StockMove({
       const result = await getSizes(Number(productId));
 
       setSizes(result);
-
-      if (result.length) {
-        setSize(String(result[0].size));
-      }
+      setSize(result.length === 1 ? String(result[0].size) : "");
     }
 
     void loadSizes();
@@ -82,14 +83,49 @@ export function StockMove({
     }, 0);
   }, []);
 
-  const handleImportBarcodeScanned = useCallback(
-    (scannedBarcode: string) => {
+  const focusQuantityField = useCallback(() => {
+    window.setTimeout(() => {
+      quantityRef.current?.focus();
+      quantityRef.current?.select();
+    }, 0);
+  }, []);
+
+  const handleImportProductFound = useCallback(
+    (product: Product, scannedBarcode: string) => {
+      if (!product.id) {
+        notificationService.error("Product not found.");
+        return;
+      }
+
       setBarcode(scannedBarcode);
+      setNotFoundBarcode("");
+      setProductId(String(product.id));
       setScannerOpen(false);
-      focusProductField();
+      focusQuantityField();
     },
-    [focusProductField]
+    [focusQuantityField]
   );
+
+  const handleImportProductNotFound = useCallback((scannedBarcode: string) => {
+    setBarcode(scannedBarcode);
+    setProductId("");
+    setSize("");
+    setSizes([]);
+    setNotFoundBarcode(scannedBarcode);
+    setScannerOpen(false);
+    notificationService.error("Product not found.");
+    focusProductField();
+  }, [focusProductField]);
+
+  const handleCreateNewProduct = useCallback(() => {
+    const params = new URLSearchParams({ new: "1" });
+
+    if (notFoundBarcode) {
+      params.set("barcode", notFoundBarcode);
+    }
+
+    navigate(`/products?${params.toString()}`);
+  }, [navigate, notFoundBarcode]);
 
   const handleExportProductFound = useCallback((product: Product, scannedBarcode: string) => {
     if (!product.id) {
@@ -154,7 +190,10 @@ export function StockMove({
                   ref={barcodeRef}
                   type="text"
                   value={barcode}
-                  onChange={(e) => setBarcode(e.target.value)}
+                  onChange={(e) => {
+                    setBarcode(e.target.value);
+                    setNotFoundBarcode("");
+                  }}
                   placeholder="Scan atau ketik barcode..."
                   className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950"
                 />
@@ -166,6 +205,20 @@ export function StockMove({
                   📷 Scan Barcode
                 </Button>
               </div>
+
+              {isImport && notFoundBarcode && (
+                <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-bold">Product not found.</p>
+                      <p>Barcode: {notFoundBarcode}</p>
+                    </div>
+                    <Button type="button" variant="secondary" onClick={handleCreateNewProduct}>
+                      Create New Product
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -202,7 +255,7 @@ export function StockMove({
 
                 {sizes.map((item) => (
                   <option key={item.size} value={item.size}>
-                    {item.size}
+                    {item.size} — stok {item.stock}
                   </option>
                 ))}
               </select>
@@ -226,6 +279,7 @@ export function StockMove({
               <label className="mb-2 block text-sm font-semibold">Jumlah</label>
 
               <input
+                ref={quantityRef}
                 type="number"
                 min={1}
                 value={quantity}
@@ -258,9 +312,8 @@ export function StockMove({
       <BarcodeScannerModal
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onBarcodeScanned={isImport ? handleImportBarcodeScanned : undefined}
-        onProductFound={isImport ? undefined : handleExportProductFound}
-        onProductNotFound={isImport ? undefined : handleExportProductNotFound}
+        onProductFound={isImport ? handleImportProductFound : handleExportProductFound}
+        onProductNotFound={isImport ? handleImportProductNotFound : handleExportProductNotFound}
         stopOnProductFound={isImport}
         stopOnProductNotFound={isImport}
       />

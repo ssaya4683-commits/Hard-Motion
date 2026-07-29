@@ -48,6 +48,9 @@ export function Products() {
   const [showForm, setShowForm] =
     useState(false);
 
+  const [initialBarcode, setInitialBarcode] =
+    useState("");
+
   const [query, setQuery] =
     useState("");
 
@@ -141,20 +144,22 @@ export function Products() {
     currentPage * pageSize
   );
 
-  function openAdd() {
+  function openAdd(barcode = "") {
     setEditing(undefined);
+    setInitialBarcode(barcode);
     setShowForm(true);
   }
   useEffect(() => {
   if (searchParams.get("new") === "1") {
-    openAdd();
+    openAdd(searchParams.get("barcode") ?? "");
 
     setSearchParams({}, { replace: true });
   }
-}, [searchParams]);
+}, [searchParams, setSearchParams]);
 
   function openEdit(product: Product) {
     setEditing(product);
+    setInitialBarcode("");
     setShowForm(true);
   }
 
@@ -286,15 +291,18 @@ export function Products() {
           {showForm && (
         <ProductForm
           product={editing}
+          initialBarcode={initialBarcode}
           isSkuDuplicate={isSkuDuplicate}
           onClose={() => {
             setShowForm(false);
             setEditing(undefined);
+            setInitialBarcode("");
           }}
           onSave={async (product) => {
             await saveProduct(product);
             setShowForm(false);
             setEditing(undefined);
+            setInitialBarcode("");
           }}
         />
       )}
