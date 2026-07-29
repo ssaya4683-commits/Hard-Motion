@@ -1,16 +1,49 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import CatalogGrid from "../components/catalog/CatalogGrid";
 import CatalogFooter from "../components/catalog/CatalogFooter";
 
-import { useInventory } from "../hooks/useInventory";
+import {
+  inventoryService,
+  type CatalogProduct,
+} from "../services/inventoryService";
 
 export default function Catalog() {
-  const { products } = useInventory();
-
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Semua");
   const [sortBy, setSortBy] = useState("newest");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadCatalog() {
+      try {
+        const catalogProducts = await inventoryService.getCatalogProducts();
+
+        if (active) {
+          setProducts(catalogProducts);
+        }
+      } catch (error) {
+        console.error("Failed to load catalog:", error);
+
+        if (active) {
+          setProducts([]);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadCatalog();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredProducts = useMemo(() => {
     const keyword = query.toLowerCase().trim();
@@ -20,27 +53,16 @@ export default function Catalog() {
     }
 
     return products.filter((product) =>
-      [
-        product.name,
-        product.category,
-        product.brand,
-        product.sku,
-      ]
+      [product.name, product.category, product.brand, product.sku]
         .filter(Boolean)
-        .some((value) =>
-          value!.toLowerCase().includes(keyword)
-        )
+        .some((value) => value!.toLowerCase().includes(keyword))
     );
   }, [products, query]);
 
   const categories = useMemo(() => {
     return [
       "Semua",
-      ...new Set(
-        products
-          .map((product) => product.category)
-          .filter(Boolean)
-      ),
+      ...new Set(products.map((product) => product.category).filter(Boolean)),
     ];
   }, [products]);
 
@@ -49,9 +71,7 @@ export default function Catalog() {
       return filteredProducts;
     }
 
-    return filteredProducts.filter(
-      (product) => product.category === category
-    );
+    return filteredProducts.filter((product) => product.category === category);
   }, [filteredProducts, category]);
 
   const sortedProducts = useMemo(() => {
@@ -65,13 +85,12 @@ export default function Catalog() {
         return list.sort((a, b) => b.name.localeCompare(a.name));
 
       case "stock":
-        return list.sort((a, b) => b.stock - a.stock);
+        return list.sort((a, b) => b.totalStock - a.totalStock);
 
       default:
         return list.sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() -
-            new Date(a.createdAt).getTime()
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     }
   }, [displayedProducts, sortBy]);
@@ -79,13 +98,9 @@ export default function Catalog() {
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="mb-10 text-center">
-        <h1 className="text-4xl font-bold">
-          HARD MOTION
-        </h1>
+        <h1 className="text-4xl font-bold">HARD MOTION</h1>
 
-        <p className="mt-3 text-slate-500">
-          Katalog Produk
-        </p>
+        <p className="mt-3 text-slate-500">Katalog Produk</p>
       </div>
 
       <div className="mb-8">
@@ -127,7 +142,13 @@ export default function Catalog() {
         ))}
       </div>
 
-      <CatalogGrid products={sortedProducts} />
+      {loading ? (
+        <div className="py-16 text-center text-slate-500">
+          Memuat katalog...
+        </div>
+      ) : (
+        <CatalogGrid products={sortedProducts} />
+      )}
 
       <CatalogFooter />
     </div>

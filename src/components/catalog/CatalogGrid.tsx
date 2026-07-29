@@ -1,9 +1,9 @@
 import CatalogCard from "./CatalogCard";
 
-import type { Product } from "../../types";
+import type { CatalogProduct } from "../../services/inventoryService";
 
 interface Props {
-  products: Product[];
+  products: CatalogProduct[];
 }
 
 export default function CatalogGrid({ products }: Props) {
@@ -18,10 +18,7 @@ export default function CatalogGrid({ products }: Props) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => (
-        <CatalogCard
-          key={product.id}
-          product={product}
-        />
+        <CatalogCard key={product.id} product={product} />
       ))}
     </div>
   );
