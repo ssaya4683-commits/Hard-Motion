@@ -10,6 +10,7 @@ import { AppLayout } from "./layouts/AppLayout";
 import { Dashboard } from "./pages/Dashboard";
 import { Products } from "./pages/Products";
 import { StockMove } from "./pages/StockMove";
+import { InventoryIn } from "./pages/InventoryIn";
 import { History } from "./pages/History";
 import { Reports } from "./pages/Reports";
 import { Settings } from "./pages/Settings";
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/barcode-scanner" element={<BarcodeScannerPage />} />
         <Route path="/import-products" element={<ImportProducts />} />
         <Route path="/export-products" element={<ExportProducts />} />
+        <Route path="/inventory-in" element={<InventoryIn />} />
         <Route path="/sales" element={<SalesPage />} />
         <Route path="/sales-history" element={<SalesHistoryPage />} />
         <Route path="/receipt/:saleId" element={<ReceiptPage />} />
