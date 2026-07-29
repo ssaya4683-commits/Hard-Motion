@@ -84,12 +84,13 @@ export function SalesPage() {
     (product: Product, size: number) => {
       setSelectedProductId(product.id);
       setSelectedSize(size);
-      cart.addItem(product, size);
+      const productSize = (sizesByProductId[product.id!] ?? []).find((item) => item.size === size);
+      cart.addItem(product, size, productSize ? getSizePrice(productSize, product) : product.sellingPrice);
       setError("");
       playSuccessBeep();
       toast.success(`Added: ${product.name} size ${size}`);
     },
-    [cart]
+    [cart, sizesByProductId]
   );
 
   const addScannedProductToCart = useCallback(
@@ -128,7 +129,6 @@ export function SalesPage() {
         return;
       }
 
-      setScannerOpen(false);
       setSizeSelection({
         product,
         sizes: [...productSizes].sort((a, b) => a.size - b.size),
