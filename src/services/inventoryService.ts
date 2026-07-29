@@ -15,6 +15,65 @@ import { barcodeService } from "./barcodeService";
 
 const now = () => new Date().toISOString();
 
+const normalizeProduct = (product: Product): Product => ({
+  ...product,
+
+  barcode: String((product as any).barcode ?? "").trim(),
+
+  purchasePrice:
+    product.purchasePrice ??
+    (product as any).costPrice ??
+    0,
+
+  sellingPrice:
+    product.sellingPrice ??
+    (product as any).salePrice ??
+    0,
+
+  minimumStock:
+    product.minimumStock ??
+    (product as any).minStock ??
+    0,
+
+  image:
+    product.image ??
+    (product as any).photo ??
+    "",
+
+  description:
+    product.description ??
+    "",
+});
+
+const getStockByProductId = (sizes: ProductSize[]) => {
+  return sizes.reduce<Record<number, number>>(
+    (totals, size) => {
+      totals[size.productId] =
+        (totals[size.productId] ?? 0) + size.stock;
+
+      return totals;
+    },
+    {}
+  );
+};
+
+const getConsistentStock = (
+  product: Product,
+  stockByProductId: Record<number, number>
+) => {
+  if (product.id == null) {
+    return product.stock;
+  }
+
+  return stockByProductId[product.id] ?? product.stock;
+};
+
+export interface CatalogProduct extends Product {
+  sizes: ProductSize[];
+  totalStock: number;
+  coverImage: string;
+}
+
 export type ProductInput = Omit<
   Product,
   "createdAt" | "updatedAt"
@@ -53,87 +112,100 @@ export const inventoryService = {
    */
 
   async getProducts() {
-    const products =
-      await db.products
-  .orderBy("updatedAt")
-  .reverse()
-  .toArray();
+    const [products, sizes] = await Promise.all([
+      db.products.orderBy("updatedAt").reverse().toArray(),
+      db.productSizes.toArray(),
+    ]);
 
-    return products.map(
-      (product) => ({
-        ...product,
-        
-        barcode: String(
-      (product as any).barcode ?? ""
-    ).trim(),
+    const stockByProductId = getStockByProductId(sizes);
 
-        purchasePrice:
-          product.purchasePrice ??
-          (product as any)
-            .costPrice ??
-          0,
+    return products.map((product) => {
+      const normalized = normalizeProduct(product);
 
-        sellingPrice:
-          product.sellingPrice ??
-          (product as any)
-            .salePrice ??
-          0,
-
-        minimumStock:
-          product.minimumStock ??
-          (product as any)
-            .minStock ??
-          0,
-
-        image:
-          product.image ??
-          (product as any)
-            .photo ??
-          "",
-
-        description:
-          product.description ??
-          "",
-      })
-    );
+      return {
+        ...normalized,
+        stock: getConsistentStock(normalized, stockByProductId),
+      };
+    });
   },
+
+  async getCatalogProducts(): Promise<CatalogProduct[]> {
+    const [rawProducts, sizes, images] = await Promise.all([
+      db.products.orderBy("updatedAt").reverse().toArray(),
+      db.productSizes.toArray(),
+      db.productImages.toArray(),
+    ]);
+    const stockByProductId = getStockByProductId(sizes);
+    const products = rawProducts.map((product) => {
+      const normalized = normalizeProduct(product);
+
+      return {
+        ...normalized,
+        stock: getConsistentStock(normalized, stockByProductId),
+      };
+    });
+
+    const sizesByProductId = new Map<number, ProductSize[]>();
+
+    for (const size of sizes) {
+      const productSizes = sizesByProductId.get(size.productId) ?? [];
+      productSizes.push(size);
+      sizesByProductId.set(size.productId, productSizes);
+    }
+
+    const imagesByProductId = new Map<number, ProductImage[]>();
+
+    for (const image of images) {
+      const productImages = imagesByProductId.get(image.productId) ?? [];
+      productImages.push(image);
+      imagesByProductId.set(image.productId, productImages);
+    }
+
+    return products.map((product) => {
+      const productId = product.id;
+      const productSizes = productId == null
+        ? []
+        : [...(sizesByProductId.get(productId) ?? [])].sort(
+            (a, b) => a.size - b.size
+          );
+      const productImages = productId == null
+        ? []
+        : imagesByProductId.get(productId) ?? [];
+      const cover =
+        productImages.find((image) => image.isCover) ?? productImages[0];
+      const totalStock = productSizes.length
+        ? productSizes.reduce((total, size) => total + size.stock, 0)
+        : product.stock;
+
+      return {
+        ...product,
+        stock: totalStock,
+        sizes: productSizes,
+        totalStock,
+        coverImage: cover?.image || product.image || "/no-image.png",
+      };
+    });
+  },
+
   async getProductById(id: number) {
-  const product = await db.products.get(id);
+    const [product, sizes] = await Promise.all([
+      db.products.get(id),
+      this.getSizes(id),
+    ]);
 
-  if (!product) {
-    return undefined;
-  }
+    if (!product) {
+      return undefined;
+    }
 
-  return {
-    ...product,
+    const normalized = normalizeProduct(product);
 
-    barcode: String((product as any).barcode ?? "").trim(),
-
-    purchasePrice:
-      product.purchasePrice ??
-      (product as any).costPrice ??
-      0,
-
-    sellingPrice:
-      product.sellingPrice ??
-      (product as any).salePrice ??
-      0,
-
-    minimumStock:
-      product.minimumStock ??
-      (product as any).minStock ??
-      0,
-
-    image:
-      product.image ??
-      (product as any).photo ??
-      "",
-
-    description:
-      product.description ??
-      "",
-  };
-},
+    return {
+      ...normalized,
+      stock: sizes.length
+        ? sizes.reduce((total, size) => total + size.stock, 0)
+        : normalized.stock,
+    };
+  },
 
   async getTransactions() {
     return db.transactions
