@@ -81,7 +81,7 @@ type FormValues =
 type SaveProduct =
   Omit<
     Product,
-    "createdAt" | "updatedAt"
+    "createdAt" | "updatedAt" | "variants" | "sizes"
   > & {
     id?: number;
 

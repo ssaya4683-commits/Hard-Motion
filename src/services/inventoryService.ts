@@ -76,7 +76,7 @@ export interface CatalogProduct extends Product {
 
 export type ProductInput = Omit<
   Product,
-  "createdAt" | "updatedAt"
+  "createdAt" | "updatedAt" | "variants" | "sizes"
 > & {
   id?: number;
 
@@ -181,6 +181,7 @@ export const inventoryService = {
         ...product,
         stock: totalStock,
         sizes: productSizes,
+        variants: productSizes,
         totalStock,
         coverImage: cover?.image || product.image || "/no-image.png",
       };
@@ -204,6 +205,8 @@ export const inventoryService = {
       stock: sizes.length
         ? sizes.reduce((total, size) => total + size.stock, 0)
         : normalized.stock,
+      variants: sizes,
+      sizes,
     };
   },
 

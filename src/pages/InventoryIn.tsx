@@ -9,7 +9,7 @@ import { notificationService } from "../services/notificationService";
 import type { Product, ProductSize } from "../types";
 
 export function InventoryIn() {
-  const { getProductById, getSizes, moveStock, refresh } = useInventory();
+  const { getProductById, moveStock, refresh } = useInventory();
   const [barcode, setBarcode] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [sizes, setSizes] = useState<ProductSize[]>([]);
@@ -40,12 +40,12 @@ export function InventoryIn() {
         return;
       }
 
-      const productSizes = await getSizes(product.id);
+      const productVariants = product.variants ?? [];
 
       setBarcode(scannedBarcode);
       setSelectedProduct(product);
-      setSizes(productSizes);
-      setSelectedSize(productSizes.length === 1 ? String(productSizes[0].size) : "");
+      setSizes(productVariants);
+      setSelectedSize(productVariants.length === 1 ? String(productVariants[0].size) : "");
       setQuantity(1);
       setMessage("");
 
@@ -54,7 +54,7 @@ export function InventoryIn() {
         quantityRef.current?.select();
       }, 0);
     },
-    [getSizes, resetProduct]
+    [resetProduct]
   );
 
   const handleProductNotFound = useCallback(
@@ -110,15 +110,21 @@ export function InventoryIn() {
         note: "Barang Masuk",
       });
 
-      const [updatedSizes, updatedProduct] = selectedProduct.id
-        ? await Promise.all([getSizes(selectedProduct.id), getProductById(selectedProduct.id)])
-        : [[], undefined];
+      const updatedProduct = selectedProduct.id
+        ? await getProductById(selectedProduct.id)
+        : undefined;
 
-      setSizes(updatedSizes);
-
-      if (updatedProduct) {
-        setSelectedProduct(updatedProduct);
+      if (!updatedProduct) {
+        resetProduct();
+        setMessage("Product not found");
+        notificationService.error("Product not found");
+        return;
       }
+
+      const updatedVariants = updatedProduct.variants ?? [];
+
+      setSizes(updatedVariants);
+      setSelectedProduct(updatedProduct);
       setQuantity(1);
       setMessage("Stock updated successfully");
       notificationService.success("Barang masuk tersimpan");
@@ -222,6 +228,12 @@ export function InventoryIn() {
                 ))}
               </select>
             </div>
+
+            {selectedProduct && sizes.length === 0 && (
+              <p className="rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                No variants are available for this product yet. Please add a variant before receiving stock.
+              </p>
+            )}
 
             {sizes.length > 0 && (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

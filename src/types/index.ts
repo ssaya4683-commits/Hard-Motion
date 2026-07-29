@@ -25,6 +25,17 @@ export interface Product {
 
   createdAt: string;
   updatedAt?: string;
+
+  /**
+   * Runtime-only variant list hydrated from productSizes.
+   * Not stored on the products table.
+   */
+  variants?: ProductSize[];
+
+  /**
+   * Legacy alias used by older product detail screens.
+   */
+  sizes?: ProductSize[];
 }
 
 export interface ProductImage {
@@ -110,4 +121,5 @@ export interface Setting {
   createdAt: string;
 
   updatedAt?: string;
+
 }
