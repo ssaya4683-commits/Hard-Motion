@@ -74,58 +74,65 @@
   margin-top: 1mm;
 }
 
-@page {
+@page barcode-label {
   margin: 0;
   size: 80mm 50mm;
 }
 
 @media print {
-  html,
-  body {
+  body.barcode-print-mode,
+  body.barcode-print-mode #root {
     background: white !important;
-    margin: 0;
-    min-height: 0 !important;
-    padding: 0;
-    width: 80mm;
-  }
-
-  body * {
-    visibility: hidden;
-  }
-
-  #root,
-  #root *,
-  .barcode-print-page,
-  .barcode-print-page * {
-    visibility: visible;
-  }
-
-  #root,
-  .barcode-print-page {
-    display: block !important;
     margin: 0 !important;
     min-height: 0 !important;
     padding: 0 !important;
     width: 80mm !important;
   }
 
-  .print-hidden,
-  .print\:hidden {
+  body.barcode-print-mode * {
+    visibility: hidden !important;
+  }
+
+  body.barcode-print-mode .barcode-print-page,
+  body.barcode-print-mode .barcode-print-page * {
+    visibility: visible !important;
+  }
+
+  body.barcode-print-mode .barcode-print-page {
+    display: block !important;
+    left: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    position: absolute !important;
+    top: 0 !important;
+    width: 80mm !important;
+  }
+
+  body.barcode-print-mode .print-hidden,
+  body.barcode-print-mode .print\:hidden {
     display: none !important;
   }
 
-  .barcode-sheet {
+  body.barcode-print-mode .barcode-sheet {
     box-shadow: none !important;
     margin: 0 !important;
-    min-height: 50mm;
+    min-height: 50mm !important;
     padding: 0 !important;
-    width: 80mm;
+    page: barcode-label;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+    width: 80mm !important;
   }
 
-  .barcode-label {
+  body.barcode-print-mode .barcode-label {
     border: 0;
-    min-height: 50mm;
-    page-break-after: avoid;
-    page-break-before: avoid;
+    height: 50mm !important;
+    min-height: 50mm !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
   }
 }

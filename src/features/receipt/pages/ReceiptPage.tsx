@@ -25,6 +25,14 @@ export function ReceiptPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.body.classList.add("receipt-print-mode");
+
+    return () => {
+      document.body.classList.remove("receipt-print-mode");
+    };
+  }, []);
+
+  useEffect(() => {
     const loadReceipt = async () => {
       if (!saleId) {
         setLoading(false);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Barcode } from "../components/barcode/Barcode";
@@ -11,6 +11,15 @@ export default function PrintBarcode() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [barcodeReady, setBarcodeReady] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.add("barcode-print-mode");
+
+    return () => {
+      document.body.classList.remove("barcode-print-mode");
+    };
+  }, []);
 
   useEffect(() => {
     async function loadProduct() {
@@ -33,6 +42,20 @@ export default function PrintBarcode() {
 
     void loadProduct();
   }, [id]);
+
+  const handleBarcodeRendered = useCallback(() => {
+    setBarcodeReady(true);
+  }, []);
+
+  const handlePrint = useCallback(() => {
+    if (!barcodeReady) return;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.print();
+      });
+    });
+  }, [barcodeReady]);
 
   if (loading) {
     return (
@@ -69,8 +92,9 @@ export default function PrintBarcode() {
 
         <button
           type="button"
-          onClick={() => window.print()}
-          className="rounded-xl bg-emerald-600 px-5 py-2 font-semibold text-white shadow hover:bg-emerald-700"
+          onClick={handlePrint}
+          disabled={!barcodeReady}
+          className="rounded-xl bg-emerald-600 px-5 py-2 font-semibold text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           🖨 Print / Save as PDF
         </button>
@@ -89,7 +113,12 @@ export default function PrintBarcode() {
           </p>
 
           <div className="barcode-symbol" aria-label={`Barcode ${product.barcode}`}>
-            <Barcode value={product.barcode || product.sku} height={54} width={1.6} />
+            <Barcode
+              value={product.barcode || product.sku}
+              height={54}
+              width={1.6}
+              onRendered={handleBarcodeRendered}
+            />
           </div>
 
           <p className="barcode-value">{product.barcode || product.sku}</p>
