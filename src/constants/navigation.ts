@@ -7,7 +7,7 @@ import {
   FileSpreadsheet,
   Settings,
   ShoppingCart,
-  Truck,
+  PackagePlus,
 } from "lucide-react";
 
 export const navigation = [
@@ -18,7 +18,7 @@ export const navigation = [
   ["/export-products", "Export Produk", FileSpreadsheet],
   ["/sales", "POS", ShoppingCart],
   ["/sales-history", "Sales History", Menu],
-  ["/stock-in", "Barang Masuk", Truck],
+  ["/inventory-in", "📥 Barang Masuk", PackagePlus],
   ["/stock-out", "Barang Keluar", ShoppingCart],
   ["/history", "Riwayat", Menu],
   ["/reports", "Laporan", BarChart3],
