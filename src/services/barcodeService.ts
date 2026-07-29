@@ -1,7 +1,29 @@
 import { db } from "../db/db";
-import type { Product } from "../types";
+import type { Product, ProductSize } from "../types";
 
 const BARCODE_LENGTH = 13;
+
+async function hydrateProductVariants(product: Product): Promise<Product> {
+  if (product.id == null) {
+    return { ...product, variants: [] };
+  }
+
+  const variants: ProductSize[] = await db.productSizes
+    .where("productId")
+    .equals(product.id)
+    .sortBy("size");
+
+  const stock = variants.length
+    ? variants.reduce((total, variant) => total + variant.stock, 0)
+    : product.stock;
+
+  return {
+    ...product,
+    stock,
+    variants,
+    sizes: variants,
+  };
+}
 
 function randomDigits(length: number) {
   let result = "";
@@ -38,10 +60,12 @@ export const barcodeService = {
 
     if (!value) return undefined;
 
-    return db.products
+    const product = await db.products
       .where("barcode")
       .equals(value)
       .first();
+
+    return product ? hydrateProductVariants(product) : undefined;
   },
 
   async getProductByBarcode(

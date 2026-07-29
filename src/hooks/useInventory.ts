@@ -136,9 +136,10 @@ export function useInventory() {
     getSizes:
       inventoryService.getSizes,
 
-    getTotalStock:
-      inventoryService.getTotalStock,
-      getProductById:
-  inventoryService.getProductById,
+    getTotalStock: (productId: number) =>
+      inventoryService.getTotalStock(productId),
+
+    getProductById: (id: number) =>
+      inventoryService.getProductById(id),
   };
 }
