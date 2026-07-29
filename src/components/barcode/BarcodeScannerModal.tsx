@@ -5,8 +5,11 @@ import { BarcodeScanner } from "./BarcodeScanner";
 type Props = {
   open: boolean;
   onClose: () => void;
-  onProductFound: (product: Product, barcode: string) => void;
-  onProductNotFound: (barcode: string) => void;
+  onProductFound?: (product: Product, barcode: string) => void;
+  onProductNotFound?: (barcode: string) => void;
+  onBarcodeScanned?: (barcode: string) => void;
+  stopOnProductFound?: boolean;
+  stopOnProductNotFound?: boolean;
 };
 
 export function BarcodeScannerModal({
@@ -14,6 +17,9 @@ export function BarcodeScannerModal({
   onClose,
   onProductFound,
   onProductNotFound,
+  onBarcodeScanned,
+  stopOnProductFound = false,
+  stopOnProductNotFound = false,
 }: Props) {
   if (!open) return null;
 
@@ -43,9 +49,10 @@ export function BarcodeScannerModal({
           className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800"
           startLabel="Start Scan"
           stopLabel="Stop Scan"
-          stopOnProductFound={false}
-          stopOnProductNotFound={false}
+          stopOnProductFound={stopOnProductFound}
+          stopOnProductNotFound={stopOnProductNotFound}
           duplicateScanDelayMs={1500}
+          onBarcodeScanned={onBarcodeScanned}
           onProductFound={onProductFound}
           onProductNotFound={onProductNotFound}
         />
