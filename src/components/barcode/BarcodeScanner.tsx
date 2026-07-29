@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
+import { useDuplicateScanGuard } from "../../hooks/useDuplicateScanGuard";
 import { barcodeService } from "../../services/barcodeService";
 import type { Product } from "../../types";
 
@@ -109,8 +110,7 @@ export function BarcodeScanner({
   const reactId = useId();
   const readerId = `barcode-scanner-${reactId.replace(/:/g, "")}`;
   const scannerRef = useRef<Html5QrcodeInstance | null>(null);
-  const lastScannedRef = useRef("");
-  const duplicateResetTimeoutRef = useRef<number | undefined>(undefined);
+  const duplicateScanGuard = useDuplicateScanGuard(duplicateScanDelayMs);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("Tekan Start Scan untuk membuka kamera.");
@@ -131,11 +131,10 @@ export function BarcodeScanner({
       console.error("Failed to stop barcode scanner:", stopError);
     } finally {
       scannerRef.current = null;
-      window.clearTimeout(duplicateResetTimeoutRef.current);
-      lastScannedRef.current = "";
+      duplicateScanGuard.reset();
       setScanning(false);
     }
-  }, []);
+  }, [duplicateScanGuard]);
 
   useEffect(() => {
     return () => {
@@ -147,10 +146,8 @@ export function BarcodeScanner({
     async (decodedText: string, _result: Html5QrcodeResult) => {
       const barcode = decodedText.trim();
 
-      if (!barcode || barcode === lastScannedRef.current) return;
+      if (!duplicateScanGuard.shouldProcess(barcode)) return;
 
-      window.clearTimeout(duplicateResetTimeoutRef.current);
-      lastScannedRef.current = barcode;
       onBarcodeScanned?.(barcode);
       setMessage(`Barcode terbaca: ${barcode}`);
       setError("");
@@ -166,11 +163,6 @@ export function BarcodeScanner({
           return;
         }
 
-        duplicateResetTimeoutRef.current = window.setTimeout(() => {
-          if (lastScannedRef.current === barcode) {
-            lastScannedRef.current = "";
-          }
-        }, duplicateScanDelayMs);
         return;
       }
 
@@ -181,15 +173,9 @@ export function BarcodeScanner({
         await stopScanner();
         return;
       }
-
-      duplicateResetTimeoutRef.current = window.setTimeout(() => {
-        if (lastScannedRef.current === barcode) {
-          lastScannedRef.current = "";
-        }
-      }, duplicateScanDelayMs);
     },
     [
-      duplicateScanDelayMs,
+      duplicateScanGuard,
       onBarcodeScanned,
       onProductFound,
       onProductNotFound,
@@ -239,13 +225,12 @@ export function BarcodeScanner({
         "Kamera tidak dapat dibuka. Pastikan izin kamera diberikan dan gunakan HTTPS/PWA atau localhost."
       );
       scannerRef.current = null;
-      window.clearTimeout(duplicateResetTimeoutRef.current);
-      lastScannedRef.current = "";
+      duplicateScanGuard.reset();
       setScanning(false);
     } finally {
       setLoading(false);
     }
-  }, [fps, handleDecoded, readerId, stopScanner]);
+  }, [duplicateScanGuard, fps, handleDecoded, readerId, stopScanner]);
 
   return (
     <section className={`space-y-4 ${className}`}>
