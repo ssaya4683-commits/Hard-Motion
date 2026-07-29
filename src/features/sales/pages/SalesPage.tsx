@@ -21,6 +21,20 @@ interface PendingStockMove {
   item: CartItem;
 }
 
+interface SizeSelectionState {
+  product: Product;
+  sizes: ProductSize[];
+}
+
+function getSizePrice(size: ProductSize, product: Product) {
+  const candidate = size as ProductSize & { sellingPrice?: unknown; price?: unknown };
+  const value = typeof candidate.sellingPrice === "number"
+    ? candidate.sellingPrice
+    : candidate.price;
+
+  return typeof value === "number" ? value : product.sellingPrice;
+}
+
 export function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sizesByProductId, setSizesByProductId] = useState<Record<number, ProductSize[]>>({});
@@ -30,6 +44,7 @@ export function SalesPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [sizeSelection, setSizeSelection] = useState<SizeSelectionState | null>(null);
   const [error, setError] = useState("");
 
   const cart = useCart();
@@ -65,6 +80,18 @@ export function SalesPage() {
   const selectedProduct = products.find((product) => product.id === selectedProductId);
   const availableSizes = selectedProductId ? sizesByProductId[selectedProductId] ?? [] : [];
 
+  const addSelectedSizeToCart = useCallback(
+    (product: Product, size: number) => {
+      setSelectedProductId(product.id);
+      setSelectedSize(size);
+      cart.addItem(product, size);
+      setError("");
+      playSuccessBeep();
+      toast.success(`Added: ${product.name} size ${size}`);
+    },
+    [cart]
+  );
+
   const addScannedProductToCart = useCallback(
     async (product: Product) => {
       if (product.id == null) {
@@ -73,26 +100,43 @@ export function SalesPage() {
       }
 
       const productSizes = sizesByProductId[product.id] ?? await inventoryService.getSizes(product.id);
-      const firstAvailableSize = productSizes.find((size) => size.stock > 0);
-
-      if (!firstAvailableSize) {
-        setError("Stok produk hasil scan tidak tersedia.");
-        toast.error("Stok produk tidak tersedia.");
-        return;
-      }
 
       setSizesByProductId((current) => ({
         ...current,
         [product.id!]: productSizes,
       }));
       setSelectedProductId(product.id);
-      setSelectedSize(firstAvailableSize.size);
-      cart.addItem(product, firstAvailableSize.size);
+
+      if (productSizes.length === 0) {
+        setError("Produk hasil scan belum memiliki ukuran.");
+        toast.error("Produk belum memiliki ukuran.");
+        playErrorBeep();
+        return;
+      }
+
+      if (productSizes.length === 1) {
+        const [onlySize] = productSizes;
+
+        if (onlySize.stock <= 0) {
+          setError("Stok produk hasil scan tidak tersedia.");
+          toast.error("Stok produk tidak tersedia.");
+          playErrorBeep();
+          return;
+        }
+
+        addSelectedSizeToCart(product, onlySize.size);
+        return;
+      }
+
+      setScannerOpen(false);
+      setSizeSelection({
+        product,
+        sizes: [...productSizes].sort((a, b) => a.size - b.size),
+      });
       setError("");
-      playSuccessBeep();
-      toast.success(`Added: ${product.name}`);
+      toast.info("Pilih ukuran produk hasil scan.");
     },
-    [cart, sizesByProductId]
+    [addSelectedSizeToCart, sizesByProductId]
   );
 
   const handleScannedProductFound = useCallback(
@@ -106,6 +150,13 @@ export function SalesPage() {
     playErrorBeep();
     toast.error("Barcode not found");
   }, []);
+
+  const handleScannedSizeSelected = (size: ProductSize) => {
+    if (!sizeSelection || size.stock <= 0) return;
+
+    addSelectedSizeToCart(sizeSelection.product, size.size);
+    setSizeSelection(null);
+  };
 
   const handleAddToCart = () => {
     if (!selectedProduct || selectedSize == null) {
@@ -340,6 +391,12 @@ export function SalesPage() {
         onProductNotFound={handleScannedProductNotFound}
       />
 
+      <SizeSelectionModal
+        selection={sizeSelection}
+        onClose={() => setSizeSelection(null)}
+        onSelect={handleScannedSizeSelected}
+      />
+
       <PaymentModal
         open={showPayment}
         total={cart.subtotal}
@@ -347,6 +404,81 @@ export function SalesPage() {
         onClose={() => setShowPayment(false)}
         onConfirm={handleCheckout}
       />
+    </div>
+  );
+}
+
+
+interface SizeSelectionModalProps {
+  selection: SizeSelectionState | null;
+  onClose: () => void;
+  onSelect: (size: ProductSize) => void;
+}
+
+function SizeSelectionModal({ selection, onClose, onSelect }: SizeSelectionModalProps) {
+  if (!selection) return null;
+
+  const { product, sizes } = selection;
+  const showPrice = sizes.some((size) => getSizePrice(size, product) !== product.sellingPrice);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="size-selection-modal-title"
+        className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-950"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="size-selection-modal-title" className="text-xl font-black">
+              Pilih Ukuran
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Barcode cocok dengan {product.name}. Pilih ukuran yang akan ditambahkan ke cart.
+            </p>
+          </div>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Tutup
+          </Button>
+        </div>
+
+        <div className="mt-5 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+              <tr>
+                <th className="px-4 py-3 font-semibold">Size</th>
+                <th className="px-4 py-3 font-semibold">Current Stock</th>
+                {showPrice && <th className="px-4 py-3 font-semibold">Price</th>}
+                <th className="px-4 py-3 text-right font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              {sizes.map((size) => {
+                const outOfStock = size.stock <= 0;
+
+                return (
+                  <tr key={size.id ?? `${product.id}-${size.size}`} className={outOfStock ? "opacity-50" : undefined}>
+                    <td className="px-4 py-3 font-semibold">{size.size}</td>
+                    <td className="px-4 py-3">{size.stock}</td>
+                    {showPrice && <td className="px-4 py-3">{formatCurrency(getSizePrice(size, product))}</td>}
+                    <td className="px-4 py-3 text-right">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={outOfStock}
+                        onClick={() => onSelect(size)}
+                      >
+                        {outOfStock ? "Stok Habis" : "Pilih"}
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
