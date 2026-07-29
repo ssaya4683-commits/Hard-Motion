@@ -4,8 +4,9 @@ import { toast } from "sonner";
 
 import { Button } from "../../../components/common/Button";
 import { Card } from "../../../components/common/Card";
-import { BarcodeScanner } from "../../../components/barcode/BarcodeScanner";
+import { BarcodeScannerModal } from "../../../components/barcode/BarcodeScannerModal";
 import { inventoryService } from "../../../services/inventoryService";
+import { playErrorBeep, playSuccessBeep } from "../../../utils/audio";
 import { formatCurrency } from "../../../utils/format";
 import type { Product, ProductSize } from "../../../types";
 import { PaymentModal } from "../components/PaymentModal";
@@ -20,31 +21,6 @@ interface PendingStockMove {
   item: CartItem;
 }
 
-function playSuccessBeep() {
-  const audioWindow = window as Window & {
-    webkitAudioContext?: typeof AudioContext;
-  };
-  const AudioContextConstructor = globalThis.AudioContext || audioWindow.webkitAudioContext;
-
-  if (!AudioContextConstructor) return;
-
-  const audioContext = new AudioContextConstructor();
-  const oscillator = audioContext.createOscillator();
-  const gain = audioContext.createGain();
-
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-  gain.gain.setValueAtTime(0.001, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.2, audioContext.currentTime + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
-
-  oscillator.connect(gain);
-  gain.connect(audioContext.destination);
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + 0.16);
-  oscillator.addEventListener("ended", () => void audioContext.close(), { once: true });
-}
-
 export function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sizesByProductId, setSizesByProductId] = useState<Record<number, ProductSize[]>>({});
@@ -53,6 +29,7 @@ export function SalesPage() {
   const [selectedSize, setSelectedSize] = useState<number>();
   const [showPayment, setShowPayment] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [error, setError] = useState("");
 
   const cart = useCart();
@@ -113,7 +90,7 @@ export function SalesPage() {
       cart.addItem(product, firstAvailableSize.size);
       setError("");
       playSuccessBeep();
-      toast.success("Product added.");
+      toast.success(`Added: ${product.name}`);
     },
     [cart, sizesByProductId]
   );
@@ -126,7 +103,8 @@ export function SalesPage() {
   );
 
   const handleScannedProductNotFound = useCallback(() => {
-    toast.error("Product not found.");
+    playErrorBeep();
+    toast.error("Barcode not found");
   }, []);
 
   const handleAddToCart = () => {
@@ -250,16 +228,9 @@ export function SalesPage() {
               </div>
             </div>
 
-            <BarcodeScanner
-              className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800"
-              startLabel="Scan Barcode"
-              stopLabel="Stop Scan"
-              stopOnProductFound={false}
-              stopOnProductNotFound
-              duplicateScanDelayMs={1800}
-              onProductFound={handleScannedProductFound}
-              onProductNotFound={handleScannedProductNotFound}
-            />
+            <Button type="button" onClick={() => setScannerOpen(true)} className="w-full sm:w-auto">
+              📷 Scan Barcode
+            </Button>
 
             <input
               value={query}
@@ -361,6 +332,13 @@ export function SalesPage() {
           </div>
         </Card>
       </div>
+
+      <BarcodeScannerModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onProductFound={handleScannedProductFound}
+        onProductNotFound={handleScannedProductNotFound}
+      />
 
       <PaymentModal
         open={showPayment}

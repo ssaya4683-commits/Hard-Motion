@@ -21,13 +21,13 @@ type Html5QrcodeConstructor = new (
 ) => Html5QrcodeInstance;
 type Html5QrcodeModule = {
   Html5Qrcode: Html5QrcodeConstructor;
-  Html5QrcodeSupportedFormats: { CODE_128: number };
+  Html5QrcodeSupportedFormats: { CODE_128: number; EAN_13: number; EAN_8: number };
 };
 
 declare global {
   interface Window {
     Html5Qrcode?: Html5QrcodeConstructor;
-    Html5QrcodeSupportedFormats?: { CODE_128: number };
+    Html5QrcodeSupportedFormats?: { CODE_128: number; EAN_13: number; EAN_8: number };
   }
 }
 
@@ -210,7 +210,11 @@ export function BarcodeScanner({
       setMessage("Meminta izin kamera...");
 
       const scanner = new Html5Qrcode(readerId, {
-        formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128],
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+        ],
         verbose: false,
       });
 
@@ -228,7 +232,7 @@ export function BarcodeScanner({
       );
 
       setScanning(true);
-      setMessage("Arahkan kamera ke barcode CODE128 produk.");
+      setMessage("Arahkan kamera ke barcode CODE128, EAN13, atau EAN8 produk.");
     } catch (startError) {
       console.error("Failed to start barcode scanner:", startError);
       setError(
