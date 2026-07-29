@@ -31,19 +31,23 @@ export const barcodeService = {
     );
   },
 
-  async getProductByBarcode(
+  async searchByBarcode(
     barcode: string
   ): Promise<Product | undefined> {
     const value = barcode.trim();
 
     if (!value) return undefined;
 
-    const products = await db.products.toArray();
+    return db.products
+      .where("barcode")
+      .equals(value)
+      .first();
+  },
 
-    return products.find(
-      (product) =>
-        String((product as any).barcode ?? "").trim() === value
-    );
+  async getProductByBarcode(
+    barcode: string
+  ): Promise<Product | undefined> {
+    return this.searchByBarcode(barcode);
   },
 
   async generateBarcode() {

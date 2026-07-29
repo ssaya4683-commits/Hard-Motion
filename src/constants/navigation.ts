@@ -3,6 +3,7 @@ import {
   Home,
   Menu,
   Package,
+  ScanBarcode,
   FileSpreadsheet,
   Settings,
   ShoppingCart,
@@ -12,6 +13,7 @@ import {
 export const navigation = [
   ["/", "Dashboard", Home],
   ["/products", "Produk", Package],
+  ["/barcode-scanner", "Scan Barcode", ScanBarcode],
   ["/import-products", "Import Produk", FileSpreadsheet],
   ["/export-products", "Export Produk", FileSpreadsheet],
   ["/sales", "POS", ShoppingCart],

@@ -23,6 +23,7 @@ import { CustomerDisplay } from "./pages/CustomerDisplay";
 import Catalog from "./pages/Catalog";
 import ProductDetail from "./pages/ProductDetail";
 import PrintBarcode from "./pages/PrintBarcode";
+import { BarcodeScannerPage } from "./pages/BarcodeScannerPage";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/barcode-scanner" element={<BarcodeScannerPage />} />
         <Route path="/import-products" element={<ImportProducts />} />
         <Route path="/export-products" element={<ExportProducts />} />
         <Route path="/sales" element={<SalesPage />} />
