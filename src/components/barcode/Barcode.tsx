@@ -1,20 +1,22 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import JsBarcode from "jsbarcode";
 
 type Props = {
   value: string;
   height?: number;
   width?: number;
+  onRendered?: () => void;
 };
 
 export function Barcode({
   value,
   height = 70,
   width = 2,
+  onRendered,
 }: Props) {
   const ref = useRef<SVGSVGElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!ref.current || !value) return;
 
     JsBarcode(ref.current, value, {
@@ -25,7 +27,9 @@ export function Barcode({
       width,
       margin: 8,
     });
-  }, [value, height, width]);
+
+    onRendered?.();
+  }, [value, height, width, onRendered]);
 
   return <svg ref={ref} />;
 }
