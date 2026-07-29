@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card } from "../common/Card";
 import { useInventory } from "../../hooks/useInventory";
 import { createWhatsappLink } from "../../utils/whatsapp";
+import { Link } from "react-router-dom";
 
 import type {
   Product,
@@ -61,6 +62,11 @@ export default function CatalogCard({
       const imageList = await getImages(productId);
       const sizeList = await getSizes(productId);
       const totalStock = await getTotalStock(productId);
+      console.log({
+  productStock: product.stock,
+  totalStock,
+  sizeList,
+});
 
       setSizes(sizeList);
       setStock(totalStock);
@@ -88,7 +94,8 @@ export default function CatalogCard({
   ]);
 
   return (
-    <Card className="group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+    <Link to={`/catalog/${product.id}`}>
+  <Card className="group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
       <div className="relative overflow-hidden">
   <img
     src={coverImage}
@@ -169,6 +176,7 @@ export default function CatalogCard({
   🟢 Pesan via WhatsApp
 </a>
       </div>
-    </Card>
+      </Card>
+</Link>
   );
 }

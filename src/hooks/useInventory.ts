@@ -49,6 +49,14 @@ export function useInventory() {
     }),
     [products]
   );
+  const getProduct = useCallback(
+  (id: number) => {
+    return products.find(
+      (product) => product.id === id
+    );
+  },
+  [products]
+);
 
   return {
     products,
@@ -58,6 +66,7 @@ export function useInventory() {
     refresh,
 
     summary,
+    getProduct,
 
     saveProduct: async (
       product: ProductInput
@@ -129,5 +138,7 @@ export function useInventory() {
 
     getTotalStock:
       inventoryService.getTotalStock,
+      getProductById:
+  inventoryService.getProductById,
   };
 }
