@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "../../../components/common/Button";
 import { Card } from "../../../components/common/Card";
+import { BarcodeScanner } from "../../../components/barcode/BarcodeScanner";
 import { inventoryService } from "../../../services/inventoryService";
 import { formatCurrency } from "../../../utils/format";
 import type { Product, ProductSize } from "../../../types";
@@ -17,6 +18,31 @@ import {
 interface PendingStockMove {
   product: Product;
   item: CartItem;
+}
+
+function playSuccessBeep() {
+  const audioWindow = window as Window & {
+    webkitAudioContext?: typeof AudioContext;
+  };
+  const AudioContextConstructor = globalThis.AudioContext || audioWindow.webkitAudioContext;
+
+  if (!AudioContextConstructor) return;
+
+  const audioContext = new AudioContextConstructor();
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+  gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.2, audioContext.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.16);
+  oscillator.addEventListener("ended", () => void audioContext.close(), { once: true });
 }
 
 export function SalesPage() {
@@ -61,6 +87,47 @@ export function SalesPage() {
 
   const selectedProduct = products.find((product) => product.id === selectedProductId);
   const availableSizes = selectedProductId ? sizesByProductId[selectedProductId] ?? [] : [];
+
+  const addScannedProductToCart = useCallback(
+    async (product: Product) => {
+      if (product.id == null) {
+        toast.error("Product not found.");
+        return;
+      }
+
+      const productSizes = sizesByProductId[product.id] ?? await inventoryService.getSizes(product.id);
+      const firstAvailableSize = productSizes.find((size) => size.stock > 0);
+
+      if (!firstAvailableSize) {
+        setError("Stok produk hasil scan tidak tersedia.");
+        toast.error("Stok produk tidak tersedia.");
+        return;
+      }
+
+      setSizesByProductId((current) => ({
+        ...current,
+        [product.id!]: productSizes,
+      }));
+      setSelectedProductId(product.id);
+      setSelectedSize(firstAvailableSize.size);
+      cart.addItem(product, firstAvailableSize.size);
+      setError("");
+      playSuccessBeep();
+      toast.success("Product added.");
+    },
+    [cart, sizesByProductId]
+  );
+
+  const handleScannedProductFound = useCallback(
+    (product: Product) => {
+      void addScannedProductToCart(product);
+    },
+    [addScannedProductToCart]
+  );
+
+  const handleScannedProductNotFound = useCallback(() => {
+    toast.error("Product not found.");
+  }, []);
 
   const handleAddToCart = () => {
     if (!selectedProduct || selectedSize == null) {
@@ -176,7 +243,24 @@ export function SalesPage() {
       <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
         <Card>
           <div className="space-y-4">
-            <h2 className="text-lg font-bold">Product Search</h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold">Product Search</h2>
+                <p className="text-sm text-slate-500">Scan barcode atau cari produk secara manual.</p>
+              </div>
+            </div>
+
+            <BarcodeScanner
+              className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800"
+              startLabel="Scan Barcode"
+              stopLabel="Stop Scan"
+              stopOnProductFound={false}
+              stopOnProductNotFound
+              duplicateScanDelayMs={1800}
+              onProductFound={handleScannedProductFound}
+              onProductNotFound={handleScannedProductNotFound}
+            />
+
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}

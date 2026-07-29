@@ -83,21 +83,34 @@ async function loadHtml5Qrcode(): Promise<Html5QrcodeModule> {
 
 type Props = {
   onProductFound?: (product: Product, barcode: string) => void;
+  onProductNotFound?: (barcode: string) => void;
   onBarcodeScanned?: (barcode: string) => void;
   fps?: number;
   className?: string;
+  startLabel?: string;
+  stopLabel?: string;
+  stopOnProductFound?: boolean;
+  stopOnProductNotFound?: boolean;
+  duplicateScanDelayMs?: number;
 };
 
 export function BarcodeScanner({
   onProductFound,
+  onProductNotFound,
   onBarcodeScanned,
   fps = 10,
   className = "",
+  startLabel = "Start Scan",
+  stopLabel = "Stop Camera",
+  stopOnProductFound = true,
+  stopOnProductNotFound = false,
+  duplicateScanDelayMs = 1500,
 }: Props) {
   const reactId = useId();
   const readerId = `barcode-scanner-${reactId.replace(/:/g, "")}`;
   const scannerRef = useRef<Html5QrcodeInstance | null>(null);
   const lastScannedRef = useRef("");
+  const duplicateResetTimeoutRef = useRef<number | undefined>(undefined);
   const [scanning, setScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("Tekan Start Scan untuk membuka kamera.");
@@ -118,6 +131,8 @@ export function BarcodeScanner({
       console.error("Failed to stop barcode scanner:", stopError);
     } finally {
       scannerRef.current = null;
+      window.clearTimeout(duplicateResetTimeoutRef.current);
+      lastScannedRef.current = "";
       setScanning(false);
     }
   }, []);
@@ -134,6 +149,7 @@ export function BarcodeScanner({
 
       if (!barcode || barcode === lastScannedRef.current) return;
 
+      window.clearTimeout(duplicateResetTimeoutRef.current);
       lastScannedRef.current = barcode;
       onBarcodeScanned?.(barcode);
       setMessage(`Barcode terbaca: ${barcode}`);
@@ -144,18 +160,43 @@ export function BarcodeScanner({
       if (product) {
         setMessage(`Produk ditemukan: ${product.name}`);
         onProductFound?.(product, barcode);
+
+        if (stopOnProductFound) {
+          await stopScanner();
+          return;
+        }
+
+        duplicateResetTimeoutRef.current = window.setTimeout(() => {
+          if (lastScannedRef.current === barcode) {
+            lastScannedRef.current = "";
+          }
+        }, duplicateScanDelayMs);
+        return;
+      }
+
+      setError("Product not found.");
+      onProductNotFound?.(barcode);
+
+      if (stopOnProductNotFound) {
         await stopScanner();
         return;
       }
 
-      setError("Product not found");
-      window.setTimeout(() => {
+      duplicateResetTimeoutRef.current = window.setTimeout(() => {
         if (lastScannedRef.current === barcode) {
           lastScannedRef.current = "";
         }
-      }, 1200);
+      }, duplicateScanDelayMs);
     },
-    [onBarcodeScanned, onProductFound, stopScanner]
+    [
+      duplicateScanDelayMs,
+      onBarcodeScanned,
+      onProductFound,
+      onProductNotFound,
+      stopOnProductFound,
+      stopOnProductNotFound,
+      stopScanner,
+    ]
   );
 
   const startScanner = useCallback(async () => {
@@ -194,6 +235,8 @@ export function BarcodeScanner({
         "Kamera tidak dapat dibuka. Pastikan izin kamera diberikan dan gunakan HTTPS/PWA atau localhost."
       );
       scannerRef.current = null;
+      window.clearTimeout(duplicateResetTimeoutRef.current);
+      lastScannedRef.current = "";
       setScanning(false);
     } finally {
       setLoading(false);
@@ -214,7 +257,7 @@ export function BarcodeScanner({
           disabled={loading || scanning}
           className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900"
         >
-          {loading ? "Starting..." : "Start Scan"}
+          {loading ? "Starting..." : startLabel}
         </button>
 
         <button
@@ -223,7 +266,7 @@ export function BarcodeScanner({
           disabled={!scanning}
           className="rounded-xl border border-slate-300 px-4 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700"
         >
-          Stop Camera
+          {stopLabel}
         </button>
       </div>
 
