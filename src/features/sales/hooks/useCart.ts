@@ -14,7 +14,7 @@ export interface CartItem {
 export function useCart() {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  const addItem = (product: Product, size: number) => {
+  const addItem = (product: Product, size: number, price = product.sellingPrice) => {
     if (product.id == null) {
       return;
     }
@@ -40,7 +40,7 @@ export function useCart() {
           sku: product.sku,
           size,
           quantity: 1,
-          price: product.sellingPrice,
+          price,
         },
       ];
     });
