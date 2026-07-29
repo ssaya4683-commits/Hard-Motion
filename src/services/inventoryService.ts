@@ -97,6 +97,43 @@ export const inventoryService = {
       })
     );
   },
+  async getProductById(id: number) {
+  const product = await db.products.get(id);
+
+  if (!product) {
+    return undefined;
+  }
+
+  return {
+    ...product,
+
+    barcode: String((product as any).barcode ?? "").trim(),
+
+    purchasePrice:
+      product.purchasePrice ??
+      (product as any).costPrice ??
+      0,
+
+    sellingPrice:
+      product.sellingPrice ??
+      (product as any).salePrice ??
+      0,
+
+    minimumStock:
+      product.minimumStock ??
+      (product as any).minStock ??
+      0,
+
+    image:
+      product.image ??
+      (product as any).photo ??
+      "",
+
+    description:
+      product.description ??
+      "",
+  };
+},
 
   async getTransactions() {
     return db.transactions
@@ -553,4 +590,11 @@ const nextSizeStock =
       0
     );
   },
+  async getProduct(id: number) {
+  const products = await this.getProducts();
+
+  return products.find(
+    (product) => product.id === id
+  );
+}
 };

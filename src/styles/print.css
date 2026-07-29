@@ -1,0 +1,28 @@
+@media print {
+
+  html,
+  body {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+    overflow: visible !important;
+  }
+
+  #root {
+    display: block !important;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+
+  .barcode-sheet {
+    width: 90mm;
+    margin: auto;
+    padding: 10mm;
+    page-break-inside: avoid;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+}

@@ -2,7 +2,7 @@ import {
   HashRouter,
   Routes,
   Route,
-} from "react-router-dom";;
+} from "react-router-dom";
 import { ToastProvider } from "./components/providers/ToastProvider";
 
 import { AppLayout } from "./layouts/AppLayout";
@@ -21,6 +21,9 @@ import { ReceiptPage } from "./features/receipt/pages/ReceiptPage";
 import { LoadingProvider } from "./components/providers/LoadingProvider";
 import { CustomerDisplay } from "./pages/CustomerDisplay";
 import Catalog from "./pages/Catalog";
+import ProductDetail from "./pages/ProductDetail";
+import PrintBarcode from "./pages/PrintBarcode";
+
 export default function App() {
   return (
   <HashRouter>
@@ -54,6 +57,14 @@ export default function App() {
 <Route
   path="/catalog"
   element={<Catalog />}
+/>
+<Route
+  path="/catalog/:id"
+  element={<ProductDetail />}
+/>
+<Route
+  path="/catalog/:id/print-barcode"
+  element={<PrintBarcode />}
 />
       </Routes>
     </AppLayout>

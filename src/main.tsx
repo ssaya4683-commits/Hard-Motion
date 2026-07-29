@@ -6,6 +6,7 @@ import App from "./App";
 
 import { initializeSettings } from "./services/settingsService";
 import { registerSW } from "virtual:pwa-register";
+import "./styles/print.css";
 
 async function bootstrap() {
   await initializeSettings();
