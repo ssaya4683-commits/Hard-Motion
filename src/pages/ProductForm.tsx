@@ -94,6 +94,8 @@ type SaveProduct =
 type Props = {
   product?: Product;
 
+  initialBarcode?: string;
+
   onClose: () => void;
 
   onSave: (
@@ -130,6 +132,7 @@ const defaults: FormValues = {
 
 export function ProductForm({
   product,
+  initialBarcode = "",
   onSave,
   onClose,
   isSkuDuplicate,
@@ -206,7 +209,10 @@ export function ProductForm({
   let cancelled = false;
 
   async function init() {
-    reset(product ?? defaults);
+    reset(product ?? {
+      ...defaults,
+      barcode: initialBarcode,
+    });
 
     setImage(product?.image ?? "");
     setDuplicateSku("");
@@ -250,7 +256,7 @@ export function ProductForm({
   return () => {
     cancelled = true;
   };
-}, [product?.id]);
+}, [initialBarcode, product?.id, reset]);
 
   const inputClass =
     "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-950";
